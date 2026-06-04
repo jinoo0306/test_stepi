@@ -29,6 +29,36 @@ export default function NewJobPage() {
   const [sheetName, setSheetName] = useState<string>("");
   const [infoSheets, setInfoSheets] = useState<string[]>([]);
   const [infoSheetName, setInfoSheetName] = useState<string>("");
+  const [dragOver, setDragOver] = useState<"essay" | "info" | "zip" | null>(null);
+
+  // 드래그&드롭으로 받은 파일을 클릭 선택과 동일하게 처리
+  const acceptDrop = (zone: "essay" | "info" | "zip") => (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(null);
+    const f = e.dataTransfer.files?.[0] ?? null;
+    if (!f) return;
+    if (zone === "essay") {
+      setFile(f);
+      setSheets([]);
+      setSheetName("");
+      loadSheets(f, "essay");
+    } else if (zone === "info") {
+      setInfoFile(f);
+      setInfoSheets([]);
+      setInfoSheetName("");
+      loadSheets(f, "info");
+    } else {
+      setPdfZip(f);
+    }
+  };
+  const dragProps = (zone: "essay" | "info" | "zip") => ({
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(zone);
+    },
+    onDragLeave: () => setDragOver(null),
+    onDrop: acceptDrop(zone),
+  });
 
   const loadSheets = async (f: File, target: "essay" | "info") => {
     try {
@@ -102,7 +132,14 @@ export default function NewJobPage() {
           <span className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-muted)] mb-2">
             자기소개서 (.xlsx)
           </span>
-          <label className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--bg-2)]/40 hover:bg-[var(--bg-2)] transition cursor-pointer py-10 px-6">
+          <label
+            {...dragProps("essay")}
+            className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed transition cursor-pointer py-10 px-6 ${
+              dragOver === "essay"
+                ? "border-[var(--secondary)] bg-[var(--secondary)]/8"
+                : "border-[var(--line-strong)] bg-[var(--bg-2)]/40 hover:bg-[var(--bg-2)]"
+            }`}
+          >
             <input
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -162,7 +199,14 @@ export default function NewJobPage() {
           <span className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-muted)] mb-2">
             지원정보 (선택 · 논문·학술지 게재 내역)
           </span>
-          <label className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)] transition cursor-pointer py-7 px-6">
+          <label
+            {...dragProps("info")}
+            className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed transition cursor-pointer py-7 px-6 ${
+              dragOver === "info"
+                ? "border-[var(--secondary)] bg-[var(--secondary)]/8"
+                : "border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)]"
+            }`}
+          >
             <input
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -221,7 +265,14 @@ export default function NewJobPage() {
           <span className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-muted)] mb-2">
             논문 PDF (선택 · 압축파일)
           </span>
-          <label className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)] transition cursor-pointer py-7 px-6">
+          <label
+            {...dragProps("zip")}
+            className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed transition cursor-pointer py-7 px-6 ${
+              dragOver === "zip"
+                ? "border-[var(--secondary)] bg-[var(--secondary)]/8"
+                : "border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)]"
+            }`}
+          >
             <input
               type="file"
               accept=".zip,application/zip,application/x-zip-compressed"
