@@ -90,7 +90,7 @@ export default function TuringMonitor() {
           hint="분석이 제출 자료에 충실하게 작성된 정도"
           value={metrics?.hallucination_prevention.rate}
           suffix="%"
-          detail={`숫자 일치 ${fmt(metrics?.hallucination_prevention.numeric_consistency_rate)} · 이름·기관 일치 ${fmt(metrics?.hallucination_prevention.entity_consistency_rate)}`}
+          detail={`AI가 쓴 숫자의 ${fmt(metrics?.hallucination_prevention.numeric_consistency_rate)}, 이름·기관의 ${fmt(metrics?.hallucination_prevention.entity_consistency_rate)}가 제출 자료와 일치`}
         />
         <MetricPanel
           icon={<ShieldCheck size={20} />}
