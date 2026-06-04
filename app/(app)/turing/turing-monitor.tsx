@@ -90,7 +90,7 @@ export default function TuringMonitor() {
           hint="분석이 제출 자료에 충실하게 작성된 정도"
           value={metrics?.hallucination_prevention.rate}
           suffix="%"
-          detail={`AI가 쓴 숫자의 ${fmt(metrics?.hallucination_prevention.numeric_consistency_rate)}, 이름·기관의 ${fmt(metrics?.hallucination_prevention.entity_consistency_rate)}가 제출 자료와 일치`}
+          detail="분석 속 숫자·이름·기관을 제출 자료와 대조"
         />
         <MetricPanel
           icon={<ShieldCheck size={20} />}
@@ -255,10 +255,6 @@ function percent(value?: number | null) {
 
 function minutes(value?: number | null) {
   return value == null ? "—" : `${(value / 60).toFixed(2)}분`;
-}
-
-function fmt(value?: number | null) {
-  return value == null ? "—" : `${value.toFixed(1)}%`;
 }
 
 function statusLabel(status: string) {
