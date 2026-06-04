@@ -62,7 +62,7 @@ export default function TuringMonitor() {
         eyebrow="AI 품질 점검"
         icon={Activity}
         title="Turing"
-        description="AI가 만든 분석 결과를 믿어도 되는지 자동으로 점검합니다. ① 지원자가 제출한 자료에 없는 내용을 지어내지 않았는지, ② 결과가 빠짐없이 완성됐는지, ③ 한 명을 분석하는 데 얼마나 걸리는지를 최근 작업 기준으로 보여줍니다."
+        description="AI가 생성한 분석 결과의 신뢰성을 자동으로 점검합니다. ① 제출 자료에 없는 내용을 생성하지 않았는지, ② 모든 항목이 빠짐없이 완성됐는지, ③ 지원자 1명당 처리 시간을 최근 작업 기준으로 보여줍니다."
         aside={
           <div className="flex items-center gap-3 text-[13px] text-[var(--ink-muted)]">
             {updatedAt && (
@@ -113,13 +113,21 @@ export default function TuringMonitor() {
 
       <section className="mt-12">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.01em]"><span className="mark" />사람이 한 번 더 확인하면 좋은 분석</h2>
-          <span className="inline-flex items-center gap-2 text-[12px] text-[var(--ink-muted)]"><AlertTriangle size={14} /> 자료에 없는 내용이거나 숫자·이름이 다른 경우</span>
+          <h2 className="flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.01em]"><span className="mark" />검수 권장 분석</h2>
+          <span className="inline-flex items-center gap-2 text-[12px] text-[var(--ink-muted)]"><AlertTriangle size={14} /> 제출 자료와 일치하지 않을 가능성이 있는 항목</span>
         </div>
         <div className="bg-[var(--paper)] border border-[var(--line-strong)] rounded-xl overflow-hidden">
           {risks.length === 0 ? (
-            <div className="py-10 px-4 text-[13px] text-[var(--ink-muted)]">따로 확인이 필요한 분석이 없습니다. 모든 결과가 자료와 일치합니다.</div>
-          ) : risks.map((item, idx) => {
+            <div className="py-10 px-4 text-[13px] text-[var(--ink-muted)]">검수가 필요한 항목이 없습니다. 모든 분석이 제출 자료와 일치합니다.</div>
+          ) : (
+          <>
+          <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-3 bg-[var(--bg-2)] border-b border-[var(--line-strong)] text-[12.5px] font-semibold tracking-wide text-[var(--ink-muted)]">
+            <div className="col-span-3">지원자</div>
+            <div className="col-span-2">유형</div>
+            <div className="col-span-3">지적 사항</div>
+            <div className="col-span-4">상세</div>
+          </div>
+          {risks.map((item, idx) => {
             const isHallucinationFlag =
               item.risk_type === "nli_contradiction"
               || item.risk_type === "llm_contradiction"
@@ -155,13 +163,15 @@ export default function TuringMonitor() {
               </Link>
             );
           })}
+          </>
+          )}
         </div>
       </section>
 
       <section className="mt-12">
         <div className="flex items-center justify-between mb-5">
           <h2 className="flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.01em]"><span className="mark" />최근 분석 점검 내역</h2>
-          {loading && <span className="text-[13px] text-[var(--ink-muted)] dots-anim">집계중</span>}
+          {loading && <span className="text-[13px] text-[var(--ink-muted)] dots-anim">집계 중</span>}
         </div>
         <div className="bg-[var(--paper)] border border-[var(--line-strong)] rounded-xl overflow-hidden">
           <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-[var(--bg-2)] border-b border-[var(--line-strong)] text-[12.5px] font-semibold tracking-wide text-[var(--ink-muted)]">
@@ -202,7 +212,7 @@ export default function TuringMonitor() {
         <div className="col-span-12 lg:col-span-4 panel">
           <div className="flex items-center gap-2 text-[14px] font-semibold text-[var(--ink)]"><Activity size={15} className="text-[var(--secondary-2)]" /> 점검 방식</div>
           <p className="mt-3 text-[13px] leading-6 text-[var(--ink-muted)]">
-            AI가 작성한 문장 속 숫자와 이름·기관을, 지원자가 제출한 자료·논문과 하나씩 대조합니다. 자료에 없거나 다른 값이 있으면 위 &lsquo;사람이 한 번 더 확인하면 좋은 분석&rsquo;에 모아 보여줍니다.
+            AI가 작성한 문장 속 숫자와 이름·기관을, 지원자가 제출한 자료·논문과 하나씩 대조합니다. 자료에 없거나 다른 값이 발견되면 위 &lsquo;검수 권장 분석&rsquo;에 모아 표시합니다.
           </p>
         </div>
         <div className="col-span-12 lg:col-span-8 panel">
@@ -279,9 +289,9 @@ function riskLabel(item: TuringRiskItem) {
 
 function flagLabel(rt?: TuringRiskItem["risk_type"]) {
   switch (rt) {
-    case "llm_contradiction": return "AI 분석에 앞뒤가 안 맞는 내용 있음";
-    case "llm_unsupported": return "자료에서 근거를 찾을 수 없음";
-    case "nli_contradiction": return "제출 자료와 어긋날 가능성";
+    case "llm_contradiction": return "분석 내용 간 상호 모순";
+    case "llm_unsupported": return "제출 자료에 근거 없음";
+    case "nli_contradiction": return "제출 자료와 불일치 가능성";
     default: return "";
   }
 }
