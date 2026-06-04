@@ -243,6 +243,11 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // 핵심인재(#1) 레이더의 합격자 평균 기준선
+  getCorePassedBaseline: () =>
+    http<{ core_passed_baseline: Record<string, number>; n_passed_matched: number; scale: string }>(
+      `/core-passed-baseline`,
+    ),
   getTuringMetrics: (limit = 30) => http<TuringMetricsResponse>(`/turing/metrics?limit=${limit}`),
   getTuringRisks: (limit = 5, maxItems = 12) =>
     http<TuringRiskResponse>(`/turing/hallucination-risks?limit=${limit}&max_items=${maxItems}`),

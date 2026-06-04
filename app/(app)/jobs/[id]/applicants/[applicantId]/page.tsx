@@ -21,12 +21,14 @@ export default async function ApplicantDetailPage({
   const { id, applicantId } = await params;
   const decodedAppId = decodeURIComponent(applicantId);
 
-  const [result, fb, papers, sourceInput] = await Promise.all([
+  const [result, fb, papers, sourceInput, coreBaselineRes] = await Promise.all([
     api.getResult(id).catch(() => null),
     api.listFeedback(id, decodedAppId).catch(() => ({ items: [] as never[] })),
     api.listPapers(id, decodedAppId).catch(() => []),
     api.getSourceInput(id).catch(() => null),
+    api.getCorePassedBaseline().catch(() => null),
   ]);
+  const coreBaseline = coreBaselineRes?.core_passed_baseline ?? null;
   const sourceApplicant = sourceInput?.applicants.find(
     (a) => a.applicant_id === decodedAppId,
   );
@@ -169,7 +171,7 @@ export default async function ApplicantDetailPage({
                 {coreData.length > 0 && (
                   <Card
                     title="핵심인재 유사도"
-                    desc="합격자들의 자기소개서와 얼마나 닮았는지를 직군별로 비교한 지표입니다."
+                    desc="합격자들의 자기소개서와 얼마나 닮았는지를 나타냅니다. 연한 음영은 역대 합격자 평균입니다."
                     action={
                       <FeedbackButtons
                         jobId={id}
@@ -180,7 +182,7 @@ export default async function ApplicantDetailPage({
                       />
                     }
                   >
-                    <RadarCard data={coreData} color="#33307A" />
+                    <RadarCard data={coreData} color="#33307A" baseline={coreBaseline} />
                   </Card>
                 )}
 
