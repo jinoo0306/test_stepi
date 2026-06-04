@@ -151,7 +151,6 @@ export default function NewJobPage() {
                 setSheetName("");
                 if (f) loadSheets(f, "essay");
               }}
-              required
             />
             {file ? (
               <>
