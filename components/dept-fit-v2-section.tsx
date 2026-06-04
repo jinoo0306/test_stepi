@@ -69,7 +69,7 @@ export default function DeptFitV2Section({
     return (
       <div className="flex items-center gap-3">
         <p className="text-[13px] text-[var(--ink-muted)]">
-          아직 채점 결과가 없습니다. 자소서 + 분석된 논문이 모두 준비되면 자동 산출됩니다.
+          아직 채점 결과가 없습니다. 자기소개서 + 분석된 논문이 모두 준비되면 자동 산출됩니다.
         </p>
         <button
           onClick={onRecompute}

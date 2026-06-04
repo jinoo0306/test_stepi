@@ -21,7 +21,7 @@ export default function ApplicantDeleteButton({ jobId, applicantId }: Props) {
     if (busy) return;
     if (
       !confirm(
-        `지원자 ${applicantId} 의 모든 데이터 (자소서·논문·점수·피드백) 가 영구 삭제됩니다. 계속할까요?`,
+        `지원자 ${applicantId} 의 모든 데이터 (자기소개서·논문·점수·피드백) 가 영구 삭제됩니다. 계속할까요?`,
       )
     )
       return;

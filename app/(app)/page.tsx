@@ -52,7 +52,7 @@ export default async function DashboardPage() {
               자기소개서 xlsx 파일을 업로드하여 첫 분석을 시작해보세요.
             </p>
             <Link href="/jobs/new" className="btn-primary inline-block mt-6">
-              자소서 업로드
+              자기소개서 업로드
             </Link>
           </div>
         ) : (

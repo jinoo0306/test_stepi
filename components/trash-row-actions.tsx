@@ -25,7 +25,7 @@ export default function TrashRowActions({ jobId }: { jobId: string }) {
   const hard = () => {
     if (
       !confirm(
-        "이 작업을 영구 삭제합니다.\n원본 자소서·분석 결과·논문·평가가 모두 사라지며 복구 불가합니다. 계속할까요?",
+        "이 작업을 영구 삭제합니다.\n원본 자기소개서·분석 결과·논문·평가가 모두 사라지며 복구 불가합니다. 계속할까요?",
       )
     )
       return;

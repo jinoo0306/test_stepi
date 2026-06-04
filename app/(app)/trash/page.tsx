@@ -16,7 +16,7 @@ export default async function TrashPage() {
         eyebrow="지원자 분석"
         icon={Trash2}
         title="휴지통"
-        description="삭제된 분석 작업이 보관됩니다. 복구하거나 영구 삭제할 수 있습니다. 영구 삭제 시 원본 자소서·분석 결과·논문·평가가 모두 함께 사라집니다."
+        description="삭제된 분석 작업이 보관됩니다. 복구하거나 영구 삭제할 수 있습니다. 영구 삭제 시 원본 자기소개서·분석 결과·논문·평가가 모두 함께 사라집니다."
       />
 
       <section className="mt-8">

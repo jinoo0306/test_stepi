@@ -81,7 +81,7 @@ export default function NewJobPage() {
     e.preventDefault();
     if (!file) return;
     setBusy(true);
-    setBusyMsg("자소서 업로드 중…");
+    setBusyMsg("자기소개서 업로드 중…");
     setErr(null);
     setZipSummary(null);
     try {
@@ -103,7 +103,7 @@ export default function NewJobPage() {
         } catch (zerr) {
           // zip 업로드 실패해도 job 자체는 진행 — 사용자가 상세 페이지에서 재시도 가능
           setErr(
-            `자소서 분석은 시작됐으나 PDF zip 업로드 실패: ${
+            `자기소개서 분석은 시작됐으나 PDF zip 업로드 실패: ${
               zerr instanceof Error ? zerr.message : String(zerr)
             }`,
           );
