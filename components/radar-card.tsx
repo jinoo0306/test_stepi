@@ -18,26 +18,27 @@ interface Props {
 
 export default function RadarCard({ data, color = "#33307A", max = 10 }: Props) {
   return (
-    <div className="h-[280px] w-full">
+    <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data} outerRadius="72%">
+        <RadarChart data={data} outerRadius="68%">
           <PolarGrid stroke="var(--line)" />
-          <PolarAngleAxis dataKey="axis" tick={{ fill: "var(--ink-muted)", fontSize: 12 }} />
+          <PolarAngleAxis dataKey="axis" tick={{ fill: "var(--ink)", fontSize: 13, fontWeight: 600 }} />
           <PolarRadiusAxis domain={[0, max]} tick={false} axisLine={false} />
           <Radar
             dataKey="value"
             stroke={color}
-            strokeWidth={1.5}
+            strokeWidth={2}
             fill={color}
-            fillOpacity={0.18}
+            fillOpacity={0.2}
             isAnimationActive
           />
           <Tooltip
             contentStyle={{
               background: "#fff",
-              border: "1px solid var(--line)",
-              borderRadius: 8,
-              fontSize: 12,
+              border: "1px solid var(--line-strong)",
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: 600,
               color: "var(--ink)",
             }}
             formatter={(v) => [typeof v === "number" ? v.toFixed(1) : String(v), "점수"]}

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UploadCloud, FileSpreadsheet, ArrowLeft, FileArchive } from "lucide-react";
-import Link from "next/link";
+import { UploadCloud, FileSpreadsheet, FilePlus2, FileArchive } from "lucide-react";
 import { api } from "@/lib/api";
+import PageHeader from "@/components/page-header";
 
 const TRACKS = [
   { value: "", label: "자동 추정 (시트 이름 기반)" },
@@ -88,22 +88,16 @@ export default function NewJobPage() {
   };
 
   return (
-    <div className="px-8 lg:px-14 py-12 max-w-3xl mx-auto fade-up">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[var(--ink-muted)] hover:text-[var(--ink)] mb-8 transition"
-      >
-        <ArrowLeft size={13} /> 대시보드
-      </Link>
-      <h1 className="serif text-[36px] leading-[1.15] mb-4 border-b border-[var(--line-strong)] pb-6">
-        자기소개서 배치 업로드
-      </h1>
-      <p className="text-[15px] text-[var(--ink-muted)] leading-[1.8] mb-10 max-w-[54ch]">
-        엑셀 파일에 담긴 지원자 자소서를 일괄 분석합니다. 분석은 비동기로 진행되며,
-        진행 상태는 다음 화면에서 실시간으로 확인할 수 있습니다.
-      </p>
+    <div className="px-8 lg:px-12 py-9 max-w-3xl mx-auto fade-up">
+      <PageHeader
+        back={{ href: "/", label: "분석 목록" }}
+        eyebrow="지원자 분석"
+        icon={FilePlus2}
+        title="새 분석"
+        description="엑셀 파일에 담긴 지원자 자기소개서를 일괄 분석합니다. 분석은 비동기로 진행되며, 진행 상태는 다음 화면에서 실시간으로 확인할 수 있습니다."
+      />
 
-      <form onSubmit={submit} className="space-y-10">
+      <form onSubmit={submit} className="space-y-10 mt-6 panel">
         <label className="block">
           <span className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-muted)] mb-2">
             엑셀 파일 (.xlsx)

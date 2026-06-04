@@ -1,6 +1,8 @@
+import { Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import JobStatusBadge from "@/components/job-status-badge";
 import TrashRowActions from "@/components/trash-row-actions";
+import PageHeader from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -9,28 +11,27 @@ export default async function TrashPage() {
   const jobs = list?.items ?? [];
 
   return (
-    <div className="px-8 lg:px-14 py-12 max-w-[1400px] mx-auto fade-up">
-      <header className="pb-8 border-b border-[var(--line-strong)]">
-        <h1 className="serif text-[36px] leading-[1.15]">휴지통</h1>
-        <p className="mt-4 text-[14px] leading-[1.8] text-[var(--ink-muted)] max-w-[60ch]">
-          삭제된 분석 작업들이 보관됩니다. 복구하거나 영구 삭제할 수 있습니다.
-          영구 삭제 시 원본 자소서·분석 결과·논문·평가 모두 함께 사라집니다.
-        </p>
-      </header>
+    <div className="px-8 lg:px-12 py-9 max-w-[1400px] mx-auto fade-up">
+      <PageHeader
+        eyebrow="지원자 분석"
+        icon={Trash2}
+        title="휴지통"
+        description="삭제된 분석 작업이 보관됩니다. 복구하거나 영구 삭제할 수 있습니다. 영구 삭제 시 원본 자소서·분석 결과·논문·평가가 모두 함께 사라집니다."
+      />
 
-      <section className="mt-10">
+      <section className="mt-8">
         {list === null ? (
-          <div className="border-t border-b border-[var(--line-strong)] py-20 text-center">
+          <div className="panel py-16 text-center">
             <p className="text-[15px] text-[var(--ink-muted)]">백엔드에 연결할 수 없습니다.</p>
           </div>
         ) : jobs.length === 0 ? (
-          <div className="border-t border-b border-[var(--line-strong)] py-20 text-center">
-            <p className="serif text-[20px] mb-2">휴지통이 비어있습니다.</p>
-            <p className="text-[13px] text-[var(--ink-muted)]">삭제된 작업이 여기로 옵니다.</p>
+          <div className="panel py-16 text-center">
+            <p className="text-[19px] font-bold mb-2">휴지통이 비어있습니다.</p>
+            <p className="text-[13.5px] text-[var(--ink-muted)]">삭제된 작업이 여기로 옵니다.</p>
           </div>
         ) : (
-          <div className="border-t border-[var(--line-strong)]">
-            <div className="grid grid-cols-12 gap-4 px-1 py-3 border-b border-[var(--line)] text-[12px] text-[var(--ink-soft)]">
+          <div className="bg-[var(--paper)] border border-[var(--line-strong)] rounded-xl overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-[var(--bg-2)] border-b border-[var(--line-strong)] text-[12.5px] font-semibold tracking-wide text-[var(--ink-muted)]">
               <div className="col-span-5">작업</div>
               <div className="col-span-2">상태</div>
               <div className="col-span-2 text-right">진행</div>
@@ -41,11 +42,11 @@ export default async function TrashPage() {
               return (
                 <div
                   key={j.job_id}
-                  className="grid grid-cols-12 items-center gap-4 px-1 py-5 border-b border-[var(--line)]"
+                  className="grid grid-cols-12 items-center gap-4 px-4 py-4 border-b border-[var(--line)] last:border-b-0"
                 >
                   <div className="col-span-5">
-                    <div className="text-[15px] text-[var(--ink-muted)] truncate">{label}</div>
-                    <div className="mt-1 font-mono text-[11px] text-[var(--ink-soft)]">
+                    <div className="text-[15px] font-medium text-[var(--ink-muted)] truncate">{label}</div>
+                    <div className="mt-0.5 font-mono text-[12px] text-[var(--ink-soft)]">
                       {j.job_id}
                     </div>
                   </div>

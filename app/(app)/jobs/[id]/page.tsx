@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Download, FileText } from "lucide-react";
+import { ArrowUpRight, Download, FileText, LayoutDashboard } from "lucide-react";
 import { api } from "@/lib/api";
 import ApplicantDeleteButton from "@/components/applicant-delete-button";
 import JobStatusBadge from "@/components/job-status-badge";
+import PageHeader from "@/components/page-header";
 import JobAutoRefresh from "./auto-refresh";
 import AnalyzingIndicator from "@/components/analyzing-indicator";
 import JobControlButtons from "@/components/job-control-buttons";
@@ -39,16 +40,11 @@ export default async function JobDetailPage({
 
   if (!status) {
     return (
-      <div className="px-8 lg:px-14 py-12 max-w-3xl mx-auto">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-[13px] text-[var(--ink-muted)] mb-8"
-        >
-          <ArrowLeft size={13} /> 목록으로
-        </Link>
-        <div className="border-t border-b border-[var(--line-strong)] py-20 text-center">
-          <h2 className="serif text-3xl mb-2">Job을 찾을 수 없습니다.</h2>
-          <p className="text-sm text-[var(--ink-muted)] font-mono">{id}</p>
+      <div className="px-8 lg:px-12 py-9 max-w-3xl mx-auto">
+        <PageHeader back={{ href: "/", label: "분석 목록" }} eyebrow="지원자 분석" title="분석 보고" />
+        <div className="mt-10 panel text-center py-16">
+          <h2 className="text-[22px] font-bold mb-2">작업을 찾을 수 없습니다.</h2>
+          <p className="text-[14px] text-[var(--ink-muted)] font-mono">{id}</p>
         </div>
       </div>
     );
@@ -58,53 +54,48 @@ export default async function JobDetailPage({
   const pct = status.progress.total ? (status.progress.done / status.progress.total) * 100 : 5;
 
   return (
-    <div className="px-8 lg:px-14 py-12 max-w-[1400px] mx-auto fade-up">
+    <div className="px-8 lg:px-12 py-9 max-w-[1400px] mx-auto fade-up">
       {isRunning && <JobAutoRefresh />}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[var(--ink-muted)] hover:text-[var(--ink)] mb-8 transition"
-      >
-        <ArrowLeft size={13} /> 목록으로
-      </Link>
 
-      <header className="grid grid-cols-12 gap-8 pb-8 border-b border-[var(--line-strong)]">
-        <div className="col-span-12 lg:col-span-8">
-          <h1 className="serif text-[40px] leading-[1.15]">분석 보고</h1>
-          <div className="mt-3 font-mono text-[13px] text-[var(--ink-soft)] break-all">
-            {id}
+      <PageHeader
+        back={{ href: "/", label: "분석 목록" }}
+        eyebrow="지원자 분석"
+        icon={LayoutDashboard}
+        title="분석 보고"
+        description={<span className="font-mono text-[13px] text-[var(--ink-soft)] break-all">{id}</span>}
+        aside={
+          <div className="w-[min(280px,80vw)] panel-soft flex flex-col gap-3.5">
+            <Stat label="상태" valueNode={<JobStatusBadge status={status.status} />} />
+            <Stat
+              label="진행"
+              valueNode={
+                <span className="text-[20px] font-semibold text-[var(--ink)] tabular-nums">
+                  {status.progress.done}
+                  <span className="text-[var(--ink-muted)] font-normal"> / {status.progress.total}</span>
+                </span>
+              }
+              sub={status.progress.failed > 0 ? `실패 ${status.progress.failed}` : undefined}
+            />
+            <Stat
+              label="개시"
+              valueNode={
+                <span className="text-[14px] tabular-nums text-[var(--ink)]">
+                  {new Date(status.created_at).toLocaleString("ko-KR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              }
+            />
+            <div className="pt-1 border-t border-[var(--line)]">
+              <JobControlButtons jobId={id} status={status.status} />
+            </div>
           </div>
-        </div>
-        <div className="col-span-12 lg:col-span-4 flex flex-col justify-end gap-4">
-          <Stat label="상태" valueNode={<JobStatusBadge status={status.status} />} />
-          <Stat
-            label="진행"
-            valueNode={
-              <span className="text-[20px] text-[var(--ink)] tabular-nums">
-                {status.progress.done}
-                <span className="text-[var(--ink-muted)]"> / {status.progress.total}</span>
-              </span>
-            }
-            sub={status.progress.failed > 0 ? `실패 ${status.progress.failed}` : undefined}
-          />
-          <div className="pt-1">
-            <JobControlButtons jobId={id} status={status.status} />
-          </div>
-          <Stat
-            label="개시"
-            valueNode={
-              <span className="text-[14px] tabular-nums text-[var(--ink)]">
-                {new Date(status.created_at).toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            }
-          />
-        </div>
-      </header>
+        }
+      />
 
       {status.error && (
         <div className="mt-8 border-l-2 border-[var(--bad)] pl-4 py-2">
@@ -137,10 +128,11 @@ export default async function JobDetailPage({
 
       {result?.results && (
         <>
-          <div className="flex items-end justify-between mt-12 mb-6">
-            <h2 className="serif text-[22px]">
+          <div className="flex items-end justify-between mt-10 mb-4">
+            <h2 className="flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.01em]">
+              <span className="mark" />
               지원자 명부
-              <span className="ml-3 text-[14px] font-normal text-[var(--ink-muted)]">
+              <span className="text-[15px] font-semibold text-[var(--ink-muted)]">
                 {result.results.length}명
                 {isRunning && status.progress.total > result.results.length && (
                   <span className="ml-2 text-[var(--secondary-2)]">
@@ -159,8 +151,8 @@ export default async function JobDetailPage({
             </div>
           </div>
 
-          <div className="border-t border-[var(--line-strong)]">
-            <div className="grid grid-cols-12 gap-4 px-1 py-3 border-b border-[var(--line)] text-[12px] text-[var(--ink-soft)]">
+          <div className="bg-[var(--paper)] border border-[var(--line-strong)] rounded-xl overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-[var(--line-strong)] text-[12.5px] font-semibold tracking-wide text-[var(--ink-muted)] bg-[var(--bg-2)]">
               <div className="col-span-1">No.</div>
               <div className="col-span-3">지원자</div>
               <div className="col-span-2 text-right">직무적합 평균</div>
@@ -179,28 +171,28 @@ export default async function JobDetailPage({
                 <Link
                   key={a.applicant_id}
                   href={`/jobs/${id}/applicants/${encodeURIComponent(a.applicant_id)}`}
-                  className="grid grid-cols-12 gap-4 items-center px-1 py-5 border-b border-[var(--line)] hover:bg-[var(--paper)] group transition"
+                  className="grid grid-cols-12 gap-4 items-center px-4 py-4 border-b border-[var(--line)] last:border-b-0 hover:bg-[var(--bg-2)] group transition"
                 >
-                  <div className="col-span-1 text-[13px] tabular-nums text-[var(--ink-muted)]">
+                  <div className="col-span-1 text-[13.5px] tabular-nums text-[var(--ink-muted)]">
                     {String(i + 1).padStart(3, "0")}
                   </div>
                   <div className="col-span-3">
-                    <div className="text-[16px] text-[var(--ink)] group-hover:underline underline-offset-4 decoration-[var(--secondary)]">
+                    <div className="text-[16.5px] font-medium text-[var(--ink)] group-hover:underline underline-offset-4 decoration-[var(--secondary)]">
                       {a.applicant_id}
                     </div>
                     {a.job_field && (
-                      <div className="text-[12px] text-[var(--ink-soft)] mt-0.5">
+                      <div className="text-[12.5px] text-[var(--ink-soft)] mt-0.5">
                         {a.job_field}
                       </div>
                     )}
                   </div>
                   <div className="col-span-2 text-right">
-                    <span className="serif text-[20px] text-[var(--ink)] tabular-nums">
+                    <span className="serif text-[22px] text-[var(--ink)] tabular-nums">
                       {fitAvg100.toFixed(0)}
                     </span>
-                    <span className="text-[12px] text-[var(--ink-muted)] ml-1">/ 100</span>
+                    <span className="text-[12.5px] text-[var(--ink-muted)] ml-1">/ 100</span>
                   </div>
-                  <div className="col-span-1 text-center text-[13px] tabular-nums">
+                  <div className="col-span-1 text-center text-[13.5px] tabular-nums">
                     {meta && meta.totalPapers > 0 ? (
                       <span className="text-[var(--ink)]">
                         {meta.analyzed}/{meta.totalPapers}
@@ -209,7 +201,7 @@ export default async function JobDetailPage({
                       <span className="text-[var(--ink-soft)]">—</span>
                     )}
                   </div>
-                  <div className="col-span-4 text-[13px] leading-[1.5] text-[var(--ink-muted)] line-clamp-2">
+                  <div className="col-span-4 text-[13.5px] leading-[1.55] text-[var(--ink-muted)] line-clamp-2">
                     {a.summary?.overall || (
                       <span className="text-[var(--ink-soft)]">—</span>
                     )}

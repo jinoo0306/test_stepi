@@ -89,8 +89,8 @@ export default function DeptFitV2Section({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[12px] text-[var(--ink-muted)]">
-          자소서 + 논문 분석 → 7개 연구부서 0-100점 LLM 채점.{" "}
+        <p className="text-[13px] text-[var(--ink-muted)]">
+          자기소개서와 논문 분석을 종합한 7개 연구부서별 적합도입니다.{" "}
           {data.computed_at && (
             <>
               <span className="mx-1">·</span>
@@ -109,22 +109,22 @@ export default function DeptFitV2Section({
         </button>
       </div>
 
-      <ol className="border-t border-[var(--line)]">
+      <ol className="border-t-2 border-[var(--line-strong)]">
         {sorted.map((d, i) => {
           const pct = (d.score / max) * 100;
           return (
             <li
               key={d.dept_name}
-              className="grid grid-cols-12 gap-4 py-4 border-b border-[var(--line)]"
+              className="grid grid-cols-12 gap-x-4 gap-y-2 py-4 border-b border-[var(--line)]"
             >
-              <div className="col-span-1 text-[12px] text-[var(--ink-muted)] tabular-nums">
+              <div className="col-span-1 text-[13px] font-medium text-[var(--ink-muted)] tabular-nums">
                 {String(i + 1).padStart(2, "0")}
               </div>
-              <div className="col-span-11 lg:col-span-4 text-[14px]">{d.dept_name}</div>
+              <div className="col-span-11 lg:col-span-4 text-[15px] font-medium self-center">{d.dept_name}</div>
               <div className="col-span-9 lg:col-span-5 self-center">
-                <div className="h-1 w-full bg-[var(--bg-2)]">
+                <div className="h-2 w-full rounded-full bg-[var(--bg-2)] overflow-hidden">
                   <div
-                    className="h-full transition-[width] duration-700"
+                    className="h-full rounded-full transition-[width] duration-700"
                     style={{
                       width: `${pct}%`,
                       background: "linear-gradient(90deg, var(--gold), var(--gold-2))",
@@ -132,11 +132,11 @@ export default function DeptFitV2Section({
                   />
                 </div>
               </div>
-              <div className="col-span-3 lg:col-span-2 text-right serif text-[18px] tabular-nums">
+              <div className="col-span-3 lg:col-span-2 text-right serif text-[20px] tabular-nums">
                 {d.score.toFixed(0)}
               </div>
               {d.reason && (
-                <p className="col-span-12 lg:col-start-3 lg:col-span-10 text-[12px] leading-[1.7] text-[var(--ink-muted)]">
+                <p className="col-span-12 lg:col-start-3 lg:col-span-10 text-[13px] leading-[1.7] text-[var(--ink-muted)]">
                   {cleanReason(d.reason)}
                 </p>
               )}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { api, feedbackKey } from "@/lib/api";
 import RadarCard from "@/components/radar-card";
 import FeedbackButtons from "@/components/feedback-buttons";
@@ -35,15 +35,15 @@ export default async function ApplicantDetailPage({
 
   if (!applicant) {
     return (
-      <div className="px-8 lg:px-14 py-12 max-w-3xl mx-auto">
+      <div className="px-8 lg:px-12 py-9 max-w-3xl mx-auto">
         <Link
           href={`/jobs/${id}`}
-          className="inline-flex items-center gap-1.5 text-[13px] text-[var(--ink-muted)] mb-8"
+          className="inline-flex items-center gap-1 text-[13.5px] text-[var(--ink-muted)] hover:text-[var(--ink)] mb-6 transition"
         >
-          <ArrowLeft size={13} /> 작업으로 돌아가기
+          <ChevronLeft size={15} /> 분석 보고로 돌아가기
         </Link>
-        <div className="border-t border-b border-[var(--line-strong)] py-20 text-center">
-          <h2 className="serif text-3xl mb-2">지원자를 찾을 수 없습니다.</h2>
+        <div className="panel text-center py-16">
+          <h2 className="text-[22px] font-bold mb-2">지원자를 찾을 수 없습니다.</h2>
           <p className="text-[14px] text-[var(--ink-muted)]">{decodedAppId}</p>
         </div>
       </div>
@@ -72,402 +72,408 @@ export default async function ApplicantDetailPage({
     value: v.score * 10,
   }));
   // v2 dept-fit (행정직 skip / PDF 미첨부 시 빈 응답)
-  const deptFit = await api
-    .getDeptFit(id, decodedAppId)
-    .catch(() => null);
+  const deptFit = await api.getDeptFit(id, decodedAppId).catch(() => null);
   const topDeptV2 = deptFit?.items?.[0];
 
-  // 학술지 게재 요약 (등급 칸 대체) — meta_only(PDF 없음) 도 게재 건수에 포함
+  // 학술지 게재 요약 — meta_only(PDF 없음) 도 게재 건수에 포함 (상세는 연구실적 탭)
   const analyzedPapers = papers.filter((p) => p.status === "analyzed");
-  const pendingPapers = papers.filter((p) =>
-    ["uploaded", "extracted", "extract_partial"].includes(p.status),
-  );
-  // 학술지명 chip: claimed_journal (xlsx 자기보고) 위주 — 카드 헤더에 top 3
-  const journalChips = Array.from(
-    new Set(
-      papers
-        .map((p) => (p.claimed_journal ?? "").trim())
-        .filter((s): s is string => s.length > 0),
-    ),
-  ).slice(0, 3);
-  const topStrength = analyzedPapers.find((p) => p.paper_strength)?.paper_strength ?? null;
 
+  const deptSub = topDeptV2
+    ? `${topDeptV2.score.toFixed(0)}점`
+    : deptFit?.skipped
+      ? "행정직 미산출"
+      : "논문 미첨부";
 
   return (
-    <div className="px-8 lg:px-14 py-12 max-w-[1280px] mx-auto fade-up">
+    <div className="px-6 lg:px-10 py-8 max-w-[1480px] mx-auto fade-up">
       <Link
         href={`/jobs/${id}`}
-        className="inline-flex items-center gap-1.5 text-[13px] text-[var(--ink-muted)] hover:text-[var(--ink)] mb-8 transition"
+        className="inline-flex items-center gap-1 text-[13.5px] text-[var(--ink-muted)] hover:text-[var(--ink)] mb-5 transition"
       >
-        <ArrowLeft size={13} /> 작업으로 돌아가기
+        <ChevronLeft size={15} /> 분석 보고로 돌아가기
       </Link>
 
-      <header className="grid grid-cols-12 gap-8 pb-8 border-b border-[var(--line-strong)]">
-        <div className="col-span-12 lg:col-span-8">
-          <div className="text-[13px] text-[var(--ink-muted)] mb-3">
-            {applicant.job_track}
-            {applicant.job_field ? ` · ${applicant.job_field}` : ""}
-          </div>
-          <h1 className="serif text-[clamp(36px,4.5vw,52px)] leading-[1.1] tracking-[-0.012em] text-[var(--ink)]">
-            {applicant.applicant_id}
-          </h1>
-        </div>
-        <div className="col-span-12 lg:col-span-4 flex flex-col justify-end gap-4">
-          <div className="border-b border-[var(--line)] pb-3">
-            <div className="flex items-baseline justify-between mb-2">
-              <div className="text-[13px] text-[var(--ink-muted)]">학술지 게재</div>
-              <FeedbackButtons
-                jobId={id}
-                applicantId={decodedAppId}
-                component="research_summary"
-                initialRating={fbOf("research_summary")}
-                size="sm"
-              />
+      {/* ── Highlights 헤더 카드 (Salesforce record highlights: 식별정보 + 핵심 지표 상시 노출) ── */}
+      <header className="panel">
+        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <span className="mark" />
+              <span className="text-[12.5px] font-bold uppercase tracking-[0.08em] text-[var(--ink-muted)]">
+                {applicant.job_track}
+                {applicant.job_field ? ` · ${applicant.job_field}` : ""}
+              </span>
             </div>
-            {papers.length === 0 ? (
-              <p className="text-[14px] text-[var(--ink-muted)] italic">게재 이력 없음</p>
-            ) : (
-              <>
-                <div className="flex items-baseline gap-3 mb-2">
-                  <span className="serif text-[44px] leading-none tabular-nums text-[var(--ink)]">
-                    {papers.length}
-                  </span>
-                  <span className="text-[13px] text-[var(--ink-muted)]">건</span>
-                </div>
-                {journalChips.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {journalChips.map((j) => (
-                      <span
-                        key={j}
-                        className="text-[11px] text-[var(--ink-muted)] bg-[var(--paper)] border border-[var(--line)] rounded-full px-2 py-0.5 truncate max-w-[180px]"
-                        title={j}
-                      >
-                        {j}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="text-[12px] text-[var(--ink-soft)]">
-                  PDF 분석 {analyzedPapers.length}/{papers.length}
-                  {pendingPapers.length > 0 && ` · 처리 중 ${pendingPapers.length}`}
-                </div>
-                {topStrength && (
-                  <p className="mt-2 text-[13px] leading-[1.55] text-[var(--ink-muted)] line-clamp-2">
-                    “{topStrength}”
-                  </p>
-                )}
-              </>
-            )}
+            <h1 className="text-[clamp(28px,3.4vw,40px)] font-bold leading-[1.05] tracking-[-0.025em] text-[var(--ink)]">
+              {applicant.applicant_id}
+            </h1>
           </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-            <SmallKpi label="직무적합 평균" value={`${fitAvg100.toFixed(0)} / 100`} />
-            {topDeptV2 ? (
-              <SmallKpi
-                label="상위 부서"
-                value={topDeptV2.dept_name}
-                sub={topDeptV2.score.toFixed(0)}
-              />
-            ) : (
-              <SmallKpi
-                label="상위 부서"
-                value="—"
-                sub={
-                  deptFit?.skipped
-                    ? "행정직 미산출"
-                    : "논문 미첨부"
-                }
-              />
-            )}
+          <div className="flex items-stretch">
+            <HeaderStat label="직무적합 평균" value={fitAvg100.toFixed(0)} unit="/ 100" accent />
+            <HeaderStat label="상위 부서" value={topDeptV2?.dept_name ?? "—"} sub={deptSub} text />
+            <HeaderStat
+              label="학술지 게재"
+              value={String(papers.length)}
+              unit="건"
+              sub={papers.length > 0 ? `PDF ${analyzedPapers.length}/${papers.length}` : "이력 없음"}
+            />
           </div>
         </div>
       </header>
 
-      <DetailTabs
-        essayContent={
-          <>
-            {/* 종합 요약 */}
-            <Section number="01" title="종합 요약">
-        <div className="grid grid-cols-12 gap-10">
-          <div className="col-span-12 lg:col-span-9">
-            {applicant.summary?.overall && (
-              <p className="serif text-[22px] leading-[1.55] tracking-[-0.005em] text-[var(--ink)]">
-                {applicant.summary.overall}
-              </p>
-            )}
-            {applicant.summary?.overall_lines && (
-              <ul className="mt-7 space-y-3">
-                {applicant.summary.overall_lines.map((line, i) => (
-                  <li key={i} className="grid grid-cols-[auto_1fr] gap-4 items-baseline">
-                    <span className="text-[13px] text-[var(--secondary-2)] tabular-nums">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-[15px] leading-[1.8] text-[var(--ink)]">{line}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="col-span-12 lg:col-span-3 flex flex-col justify-start items-end gap-3">
-            <RegenerateSummaryButton jobId={id} applicantId={decodedAppId} />
-            <FeedbackButtons
-              jobId={id}
-              applicantId={decodedAppId}
-              component="summary_overall"
-              initialRating={fbOf("summary_overall")}
-              label="요약 평가"
-            />
-          </div>
-        </div>
-      </Section>
-
-      {/* 학력·이력 타임라인 */}
-      <Section number="01-A" title="학력 · 이력 타임라인">
-        <TimelineSection
-          education={sourceApplicant?.education}
-          career={sourceApplicant?.career}
-        />
-      </Section>
-
-      {/* 자기소개서 핵심 */}
-      {applicant.summary?.by_question && applicant.summary.by_question.length > 0 && (
-        <Section number="02" title="자기소개서 핵심">
-          <ol className="border-t border-[var(--line)]">
-            {(() => {
-              const rows = applicant.summary.by_question;
-              const qNumByQid = new Map<string, number>();
-              rows.forEach((q) => {
-                if (!qNumByQid.has(q.question_id)) qNumByQid.set(q.question_id, qNumByQid.size + 1);
-              });
-              return rows.map((q, i) => {
-                const isFirstOfGroup = i === 0 || rows[i - 1].question_id !== q.question_id;
-                const qNum = qNumByQid.get(q.question_id) ?? 0;
-                const itemIdx = q.item_index ?? 0;
-                const itemKey = `${q.question_id}-${itemIdx}`;
-                return (
-                  <li
-                    key={itemKey}
-                    className="grid grid-cols-12 gap-6 items-start py-7 border-b border-[var(--line)]"
-                  >
-                    <div className="col-span-12 lg:col-span-2">
-                      {isFirstOfGroup && (
-                        <div className="text-[13px] text-[var(--ink-muted)] tabular-nums">
-                          Q{String(qNum).padStart(2, "0")}
-                        </div>
-                      )}
-                    </div>
-                    <div className="col-span-12 lg:col-span-8">
-                      {isFirstOfGroup && (
-                        <p className="text-[13px] text-[var(--ink-soft)] mb-3">{q.question}</p>
-                      )}
-                      <h3 className="serif text-[20px] leading-[1.35] mb-1.5">
-                        {q.title || q.question_id}
-                      </h3>
-                      <p className="text-[15px] leading-[1.8] text-[var(--ink)]">{q.content}</p>
-                    </div>
-                    <div className="col-span-12 lg:col-span-2 flex lg:justify-end">
+      <div className="mt-6">
+        <DetailTabs
+          essayContent={
+            <>
+              <div className="flex flex-col lg:flex-row gap-5 mt-6 items-start">
+                {/* ── 메인 컬럼 (좌) — 우측 레일과 높이 독립, 여백 없음 ── */}
+                <div className="flex-1 min-w-0 flex flex-col gap-5">
+                {/* 종합 요약 */}
+                <Card
+                  title="종합 요약"
+                  action={
+                    <>
+                      <RegenerateSummaryButton jobId={id} applicantId={decodedAppId} />
                       <FeedbackButtons
                         jobId={id}
                         applicantId={decodedAppId}
-                        component="summary_by_question"
-                        itemKey={itemKey}
-                        initialRating={fbOf("summary_by_question", itemKey)}
+                        component="summary_overall"
+                        initialRating={fbOf("summary_overall")}
                         size="sm"
                       />
-                    </div>
-                  </li>
-                );
-              });
-            })()}
-          </ol>
-        </Section>
-      )}
-
-      {/* 역량 진단 */}
-      <Section number="03" title="역량 진단">
-        <div className="grid grid-cols-12 gap-12">
-          {coreData.length > 0 && (
-            <div className="col-span-12 lg:col-span-6">
-              <div className="flex items-baseline justify-between mb-3">
-                <div>
-                  <div className="text-[15px] font-medium">핵심인재 유사도</div>
-                  <p className="mt-1 text-[12.5px] text-[var(--ink-muted)] max-w-[36ch] leading-[1.6]">
-                    합격자 자소서와의 코사인 유사도 — 직군별 핵심인재 패턴과의 거리.
-                  </p>
-                </div>
-                <FeedbackButtons
-                  jobId={id}
-                  applicantId={decodedAppId}
-                  component="core_similarity"
-                  initialRating={fbOf("core_similarity")}
-                  size="sm"
-                />
-              </div>
-              <RadarCard data={coreData} color="#33307A" />
-            </div>
-          )}
-
-          {fitData.length > 0 && (
-            <div className="col-span-12 lg:col-span-6">
-              <div className="flex items-baseline justify-between mb-3">
-                <div>
-                  <div className="text-[15px] font-medium">직무 적합도</div>
-                  <p className="mt-1 text-[12.5px] text-[var(--ink-muted)] max-w-[36ch] leading-[1.6]">
-                    직무정의(JD) 기준 5축 평가 — LLM이 0-100 점수로 채점.
-                  </p>
-                </div>
-                <FeedbackButtons
-                  jobId={id}
-                  applicantId={decodedAppId}
-                  component="job_fit"
-                  initialRating={fbOf("job_fit")}
-                  size="sm"
-                />
-              </div>
-              <RadarCard data={fitData} color="#F39200" max={100} />
-            </div>
-          )}
-        </div>
-
-        {fitData.length > 0 && (
-          <div className="mt-10 border-t border-[var(--line)]">
-            {Object.entries(applicant.scores?.job_fit ?? {}).map(([axis, v]) => (
-              <div
-                key={axis}
-                className="grid grid-cols-12 gap-6 py-5 border-b border-[var(--line)] items-baseline"
-              >
-                <div className="col-span-12 lg:col-span-2 serif text-[17px]">{axis}</div>
-                <div className="col-span-3 lg:col-span-1 serif text-[20px] text-[var(--secondary-2)] tabular-nums">
-                  {(v.score * 10).toFixed(0)}
-                </div>
-                <p className="col-span-9 lg:col-span-8 text-[14px] leading-[1.75] text-[var(--ink-muted)]">
-                  {cleanReason(v.reason)}
-                </p>
-                <div className="col-span-12 lg:col-span-1 flex lg:justify-end">
-                  <FeedbackButtons
-                    jobId={id}
-                    applicantId={decodedAppId}
-                    component="job_fit"
-                    itemKey={axis}
-                    initialRating={fbOf("job_fit", axis)}
-                    size="sm"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Section>
-
-      {/* 직군 적합도 v2 — 자소서 + 논문 → 7부서 0-100 (행정직은 skip) */}
-      <Section number="04" title="직군 적합도">
-        <div className="grid grid-cols-12 gap-12">
-          <div className="col-span-12 lg:col-span-9">
-            <DeptFitV2Section jobId={id} applicantId={decodedAppId} />
-          </div>
-          <div className="col-span-12 lg:col-span-3 flex lg:justify-end">
-            <FeedbackButtons
-              jobId={id}
-              applicantId={decodedAppId}
-              component="department_fit"
-              initialRating={fbOf("department_fit")}
-              label="매칭 평가"
-            />
-          </div>
-        </div>
-      </Section>
-
-      {/* 추천 면접 질문 — 자소서 RAG (논문 기반 질문은 연구실적 탭의 각 논문 카드에서 별도 노출) */}
-      {applicant.interview_questions && applicant.interview_questions.length > 0 && (
-        <InterviewQuestionsToggle>
-        <Section number="06" title="추천 면접 질문">
-          <div className="grid grid-cols-12 gap-x-8 border-t border-[var(--line)]">
-            {applicant.interview_questions.map((q, idx) => (
-              <article
-                key={q.id}
-                className="col-span-12 md:col-span-6 grid grid-cols-[auto_1fr] gap-5 py-7 border-b border-[var(--line)]"
-              >
-                <div className="serif text-[28px] leading-none text-[var(--ink-muted)] tabular-nums">
-                  {String(idx + 1).padStart(2, "0")}
-                </div>
-                <div>
-                  <p className="text-[16px] leading-[1.6] text-[var(--ink)]">
-                    {q.question}
-                  </p>
-                  {(q.intent || q.topic_tag) && (
-                    <div className="mt-3 text-[12.5px] text-[var(--ink-muted)] leading-[1.6] flex flex-wrap items-center gap-2">
-                      {q.topic_tag && (
-                        <span className="inline-block px-2 py-0.5 rounded-[2px] border border-[var(--line-strong)] text-[11px]">
-                          {q.topic_tag}
-                        </span>
-                      )}
-                      {q.intent && <span>{q.intent}</span>}
-                    </div>
+                    </>
+                  }
+                >
+                  {applicant.summary?.overall && (
+                    <p className="serif text-[20px] leading-[1.55] tracking-[-0.005em] text-[var(--ink)]">
+                      {applicant.summary.overall}
+                    </p>
                   )}
-                  <div className="mt-4">
+                  {applicant.summary?.overall_lines && (
+                    <ul className="mt-6 space-y-3">
+                      {applicant.summary.overall_lines.map((line, i) => (
+                        <li key={i} className="grid grid-cols-[auto_1fr] gap-3.5 items-baseline">
+                          <span className="text-[13px] text-[var(--secondary-2)] tabular-nums">
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
+                          <span className="text-[15.5px] leading-[1.8] text-[var(--ink)]">{line}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+
+                {/* 역량 진단 — radar 2개 나란히 (동일 높이) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* 핵심인재 유사도 */}
+                {coreData.length > 0 && (
+                  <Card
+                    title="핵심인재 유사도"
+                    desc="합격자들의 자기소개서와 얼마나 닮았는지를 직군별로 비교한 지표입니다."
+                    action={
+                      <FeedbackButtons
+                        jobId={id}
+                        applicantId={decodedAppId}
+                        component="core_similarity"
+                        initialRating={fbOf("core_similarity")}
+                        size="sm"
+                      />
+                    }
+                  >
+                    <RadarCard data={coreData} color="#33307A" />
+                  </Card>
+                )}
+
+                {/* 직무 적합도 */}
+                {fitData.length > 0 && (
+                  <Card
+                    title="직무 적합도"
+                    desc="직무에서 요구하는 5개 역량을 기준으로 평가한 적합도입니다."
+                    action={
+                      <FeedbackButtons
+                        jobId={id}
+                        applicantId={decodedAppId}
+                        component="job_fit"
+                        initialRating={fbOf("job_fit")}
+                        size="sm"
+                      />
+                    }
+                  >
+                    <RadarCard data={fitData} color="#F39200" max={100} />
+                  </Card>
+                )}
+                </div>
+
+                {/* 직무적합 역량별 근거 */}
+                {fitData.length > 0 && (
+                  <Card title="직무적합 역량별 근거">
+                    <div>
+                      {Object.entries(applicant.scores?.job_fit ?? {}).map(([axis, v], idx) => (
+                        <div
+                          key={axis}
+                          className={`grid grid-cols-12 gap-x-6 gap-y-2 py-4 items-baseline ${idx > 0 ? "border-t border-[var(--line)]" : ""}`}
+                        >
+                          <div className="col-span-6 lg:col-span-2 serif text-[18px]">{axis}</div>
+                          <div className="col-span-6 lg:col-span-1 serif text-[24px] text-[var(--secondary-2)] tabular-nums">
+                            {(v.score * 10).toFixed(0)}
+                          </div>
+                          <p className="col-span-12 lg:col-span-8 text-[14.5px] leading-[1.75] text-[var(--ink-muted)]">
+                            {cleanReason(v.reason)}
+                          </p>
+                          <div className="col-span-12 lg:col-span-1 flex lg:justify-end">
+                            <FeedbackButtons
+                              jobId={id}
+                              applicantId={decodedAppId}
+                              component="job_fit"
+                              itemKey={axis}
+                              initialRating={fbOf("job_fit", axis)}
+                              size="sm"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* 직군 적합도 */}
+                <Card
+                  title="직군 적합도"
+                  action={
                     <FeedbackButtons
                       jobId={id}
                       applicantId={decodedAppId}
-                      component="interview_question"
-                      itemKey={String(q.id)}
-                      initialRating={fbOf("interview_question", String(q.id))}
+                      component="department_fit"
+                      initialRating={fbOf("department_fit")}
                       size="sm"
                     />
-                  </div>
+                  }
+                >
+                  <DeptFitV2Section jobId={id} applicantId={decodedAppId} />
+                </Card>
+
+                {/* 자기소개서 핵심 — 문항별로 묶어 정리 */}
+                {applicant.summary?.by_question && applicant.summary.by_question.length > 0 && (
+                  <Card title="자기소개서 핵심">
+                    <div className="space-y-7">
+                      {(() => {
+                        const rows = applicant.summary.by_question;
+                        const order: {
+                          qid: string;
+                          qNum: number;
+                          question: string;
+                          items: typeof rows;
+                        }[] = [];
+                        const map = new Map<string, (typeof order)[number]>();
+                        rows.forEach((q) => {
+                          let g = map.get(q.question_id);
+                          if (!g) {
+                            g = { qid: q.question_id, qNum: order.length + 1, question: q.question, items: [] };
+                            map.set(q.question_id, g);
+                            order.push(g);
+                          }
+                          g.items.push(q);
+                        });
+                        return order.map((g, gi) => (
+                          <div
+                            key={g.qid}
+                            className={gi > 0 ? "pt-7 border-t border-[var(--line)]" : ""}
+                          >
+                            {/* 문항 헤더 */}
+                            <div className="flex items-baseline gap-2.5 mb-3.5">
+                              <span className="inline-flex items-center justify-center shrink-0 h-[22px] px-2 rounded-md bg-[var(--p-50)] text-[var(--p-700)] text-[12px] font-bold tabular-nums">
+                                Q{String(g.qNum).padStart(2, "0")}
+                              </span>
+                              <p className="text-[14px] font-medium text-[var(--ink-muted)] leading-[1.5]">
+                                {g.question}
+                              </p>
+                            </div>
+                            {/* 항목 — 문항 아래 들여쓰기 + 좌측 라인으로 그룹화 */}
+                            <div className="space-y-4 pl-3.5 border-l-2 border-[var(--line)]">
+                              {g.items.map((item) => {
+                                const itemKey = `${item.question_id}-${item.item_index ?? 0}`;
+                                return (
+                                  <div key={itemKey} className="flex gap-3 items-start">
+                                    <span className="mt-[10px] h-1.5 w-1.5 rounded-full bg-[var(--secondary)] shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <h3 className="serif text-[18px] leading-[1.4] text-[var(--ink)]">
+                                          {item.title || item.question_id}
+                                        </h3>
+                                        <FeedbackButtons
+                                          jobId={id}
+                                          applicantId={decodedAppId}
+                                          component="summary_by_question"
+                                          itemKey={itemKey}
+                                          initialRating={fbOf("summary_by_question", itemKey)}
+                                          size="sm"
+                                        />
+                                      </div>
+                                      <p className="mt-1 text-[15.5px] leading-[1.75] text-[var(--ink)]">
+                                        {item.content}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </Card>
+                )}
+
+                {/* 추천 면접 질문 — 표시 설정에 따라 토글 (메인 컬럼 하단) */}
+                {applicant.interview_questions && applicant.interview_questions.length > 0 && (
+                  <InterviewQuestionsToggle>
+                    <Card title="추천 면접 질문">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                        {applicant.interview_questions.map((q, idx) => (
+                          <article
+                            key={q.id}
+                            className="grid grid-cols-[auto_1fr] gap-5 py-5 border-b border-[var(--line)] last:border-b-0 md:[&:nth-last-child(2):nth-child(odd)]:border-b-0"
+                          >
+                            <div className="serif text-[26px] leading-none text-[var(--ink-muted)] tabular-nums">
+                              {String(idx + 1).padStart(2, "0")}
+                            </div>
+                            <div>
+                              <p className="text-[16px] leading-[1.6] text-[var(--ink)]">{q.question}</p>
+                              {(q.intent || q.topic_tag) && (
+                                <div className="mt-3 text-[12.5px] text-[var(--ink-muted)] leading-[1.6] flex flex-wrap items-center gap-2">
+                                  {q.topic_tag && (
+                                    <span className="inline-block px-2 py-0.5 rounded-full border border-[var(--line-strong)] text-[11px]">
+                                      {q.topic_tag}
+                                    </span>
+                                  )}
+                                  {q.intent && <span>{q.intent}</span>}
+                                </div>
+                              )}
+                              <div className="mt-4">
+                                <FeedbackButtons
+                                  jobId={id}
+                                  applicantId={decodedAppId}
+                                  component="interview_question"
+                                  itemKey={String(q.id)}
+                                  initialRating={fbOf("interview_question", String(q.id))}
+                                  size="sm"
+                                />
+                              </div>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </Card>
+                  </InterviewQuestionsToggle>
+                )}
                 </div>
-              </article>
-            ))}
-          </div>
-        </Section>
-        </InterviewQuestionsToggle>
-      )}
-          </>
-        }
-        paperContent={
-          <Section number="05" title="학술지 게재 이력">
-            <PapersSection jobId={id} applicantId={decodedAppId} />
-          </Section>
-        }
-      />
+                {/* /메인 컬럼 */}
+
+                {/* ── 우측 레일 (독립 컬럼 — 메인과 높이 결합 없음) ── */}
+                <aside className="w-full lg:w-[340px] shrink-0 flex flex-col gap-5">
+                  <Card title="학력 · 이력">
+                    <TimelineSection
+                      education={sourceApplicant?.education}
+                      career={sourceApplicant?.career}
+                    />
+                  </Card>
+                </aside>
+              </div>
+            </>
+          }
+          paperContent={
+            <Card
+              title="학술지 게재 이력"
+              className="mt-6"
+              action={
+                <FeedbackButtons
+                  jobId={id}
+                  applicantId={decodedAppId}
+                  component="research_summary"
+                  initialRating={fbOf("research_summary")}
+                  size="sm"
+                />
+              }
+            >
+              <PapersSection jobId={id} applicantId={decodedAppId} />
+            </Card>
+          }
+        />
+      </div>
     </div>
   );
 }
 
-function Section({
-  number,
+/** 카드 — 흰 surface + 액센트 바 마커 헤더 (번호 없이 섹션 구분) */
+function Card({
   title,
+  desc,
+  action,
+  className,
   children,
 }: {
-  number: string;
   title: string;
+  desc?: string;
+  action?: React.ReactNode;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-16">
-      <header className="flex items-baseline gap-5 mb-8 pb-4 border-b border-[var(--ink)]">
-        <span className="text-[13px] text-[var(--ink-muted)] tabular-nums">{number}</span>
-        <h2 className="serif text-[26px]">{title}</h2>
-      </header>
+    <section className={`panel ${className ?? ""}`}>
+      <div className="flex items-start justify-between gap-4 pb-3.5 mb-4 border-b border-[var(--line)]">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5">
+            <span className="mark" />
+            <h2 className="text-[18px] font-bold tracking-[-0.012em] text-[var(--ink)]">{title}</h2>
+          </div>
+          {desc && (
+            <p className="mt-1.5 pl-[14px] text-[13px] text-[var(--ink-muted)] leading-[1.6] max-w-[52ch]">
+              {desc}
+            </p>
+          )}
+        </div>
+        {action && <div className="flex items-center gap-3 shrink-0">{action}</div>}
+      </div>
       {children}
     </section>
   );
 }
 
-function SmallKpi({
+/** Highlights 헤더의 핵심 지표 셀 (첫 셀은 강조) */
+function HeaderStat({
   label,
   value,
+  unit,
   sub,
+  accent,
+  text,
 }: {
   label: string;
   value: string;
+  unit?: string;
   sub?: string;
+  accent?: boolean;
+  text?: boolean;
 }) {
   return (
-    <div>
-      <div className="text-[12px] text-[var(--ink-muted)] mb-1">{label}</div>
-      <div className="text-[15px] text-[var(--ink)] tabular-nums">
-        {value}
-        {sub && <span className="ml-2 text-[12px] text-[var(--ink-muted)]">· {sub}</span>}
+    <div className="px-5 first:pl-0 last:pr-0 border-l border-[var(--line)] first:border-l-0 min-w-0">
+      <div className="text-[11.5px] font-bold uppercase tracking-[0.05em] text-[var(--ink-muted)] mb-1.5">
+        {label}
       </div>
+      <div
+        className={`leading-none truncate max-w-[180px] ${
+          accent
+            ? "text-[30px] font-extrabold text-[var(--secondary-2)] tabular-nums"
+            : text
+              ? "text-[18px] font-bold text-[var(--ink)]"
+              : "text-[26px] font-extrabold text-[var(--ink)] tabular-nums"
+        }`}
+        title={value}
+      >
+        {value}
+        {unit && <span className="text-[13px] font-semibold text-[var(--ink-muted)] ml-1">{unit}</span>}
+      </div>
+      {sub && <div className="mt-1.5 text-[12px] text-[var(--ink-muted)] truncate max-w-[180px]">{sub}</div>}
     </div>
   );
 }

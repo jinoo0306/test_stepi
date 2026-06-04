@@ -85,8 +85,10 @@ html, body {
   color: var(--ink);
   font-family: var(--font-sans);
   font-feature-settings: "ss01", "ss02";
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 16.5px;
+  font-weight: 430;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
@@ -104,10 +106,11 @@ body {
 
 /* small caption / label */
 .eyebrow {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
 }
 
 /* numbered section pre-header */
@@ -115,12 +118,12 @@ body {
   display: inline-flex;
   align-items: baseline;
   gap: 0.7rem;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
 }
 .section-num strong {
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
   color: var(--ink);
   letter-spacing: 0.02em;
@@ -181,14 +184,48 @@ body {
   box-shadow: none;
 }
 
+/* panel — flat bordered card (clean white surface, no shadow) */
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 1.4rem 1.5rem;
+}
+.panel-soft {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.2rem 1.3rem;
+}
+/* panel heading bar — accent-bar marked title sitting above a divider inside a panel */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+/* section accent marker — vertical bar before a heading (replaces numbering) */
+.mark {
+  display: inline-block;
+  height: 1.05em;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--secondary);
+  flex-shrink: 0;
+  transform: translateY(0.08em);
+}
+
 .btn-primary {
   background: var(--ink);
   color: #FFFFFF;
-  border-radius: 2px;
-  padding: 0.7rem 1.2rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
+  border-radius: 3px;
+  padding: 0.72rem 1.35rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
   transition: background 0.15s ease;
 }
 .btn-primary:hover { background: var(--p-800); }
@@ -198,11 +235,11 @@ body {
   background: transparent;
   color: var(--ink);
   border: 1px solid var(--ink);
-  border-radius: 2px;
-  padding: 0.55rem 0.95rem;
-  font-weight: 500;
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
+  border-radius: 3px;
+  padding: 0.58rem 1.05rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
   transition: background 0.15s ease, color 0.15s ease;
 }
 .btn-ghost:hover { background: var(--ink); color: #fff; }
@@ -210,10 +247,10 @@ body {
 .input {
   background: var(--paper);
   border: 1px solid var(--line-strong);
-  border-radius: 2px;
-  padding: 0.75rem 0.95rem;
+  border-radius: 3px;
+  padding: 0.78rem 1rem;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--ink);
   transition: border-color 0.15s ease;
 }
@@ -261,8 +298,9 @@ body {
 .recharts-polar-grid-concentric-polygon { stroke: var(--line) !important; }
 .recharts-polar-grid-angle line { stroke: var(--line) !important; }
 .recharts-polar-angle-axis-tick text {
-  fill: var(--ink-muted) !important;
-  font-size: 10.5px !important;
+  fill: var(--ink) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
   font-family: var(--font-sans);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ShieldAlert, FileSearch, Upload, Loader2 } from "lucide-react";
+import PageHeader from "@/components/page-header";
 import {
   prelim,
   type PrelimRunResponse,
@@ -50,16 +51,20 @@ export default function PrelimMonitor() {
   }
 
   return (
-    <div className="px-8 py-10 max-w-[1400px] mx-auto">
-      <header className="mb-8">
-        <h1 className="serif text-[34px] tracking-tight">사전위배검토</h1>
-        <p className="mt-2 text-[14px] text-[var(--ink-muted)]">
-          블라인드 위배 (자소서 키워드 스캔) + 위원·기관 제척 매칭. 파일 업로드 후 즉시 실행.
-        </p>
-      </header>
+    <div className="px-8 lg:px-12 py-9 max-w-[1400px] mx-auto fade-up">
+      <PageHeader
+        eyebrow="사전 스크리닝"
+        icon={ShieldAlert}
+        title="사전스크리닝검토"
+        description="블라인드 위배(자기소개서 키워드 스캔)와 위원·기관 제척 매칭을 한 번에 점검합니다. 파일 업로드 후 즉시 실행됩니다."
+      />
 
       {/* 업로드 폼 */}
-      <section className="border-t border-[var(--line-strong)] pt-6 mb-10">
+      <section className="mt-6 mb-8 panel">
+        <div className="flex items-center gap-2.5 pb-3.5 mb-5 border-b border-[var(--line)]">
+          <span className="mark" />
+          <h2 className="text-[18px] font-bold tracking-[-0.012em] text-[var(--ink)]">검토 파일 업로드</h2>
+        </div>
         <form onSubmit={onSubmit} className="grid grid-cols-12 gap-5">
           <FileField name="apply_xlsx" label="블라인드 가공 지원자 xlsx" required hint="자기소개서 + 식별정보" />
           <FileField name="raw_xlsm" label="원본 xlsm (선택)" hint="동적 키워드 + 제척 검토용" />
@@ -71,7 +76,7 @@ export default function PrelimMonitor() {
             <button
               type="submit"
               disabled={running}
-              className="inline-flex items-center gap-2 px-5 py-2 border border-[var(--ink)] text-[14px] disabled:opacity-50"
+              className="btn-primary inline-flex items-center gap-2"
             >
               {running ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
               {running ? "실행 중…" : "검토 실행"}
@@ -105,15 +110,15 @@ export default function PrelimMonitor() {
 
       {/* 히스토리 */}
       <section>
-        <h2 className="serif text-[22px] mb-4">최근 실행 기록</h2>
-        <div className="border-t border-[var(--line-strong)]">
+        <h2 className="flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.01em] mb-4"><span className="mark" />최근 실행 기록</h2>
+        <div className="bg-[var(--paper)] border border-[var(--line-strong)] rounded-xl overflow-hidden">
           {history.length === 0 ? (
-            <div className="py-8 text-[13px] text-[var(--ink-muted)]">아직 실행 기록이 없습니다.</div>
+            <div className="py-10 px-4 text-[13px] text-[var(--ink-muted)]">아직 실행 기록이 없습니다.</div>
           ) : history.map((h) => (
             <button
               key={h.ticket}
               onClick={() => loadTicket(h.ticket)}
-              className="w-full text-left grid grid-cols-12 gap-4 px-1 py-3 border-b border-[var(--line)] hover:bg-[var(--paper)] transition"
+              className="w-full text-left grid grid-cols-12 gap-4 px-4 py-3.5 border-b border-[var(--line)] last:border-b-0 hover:bg-[var(--bg-2)] transition"
             >
               <div className="col-span-3 font-mono text-[12px] text-[var(--ink-soft)] truncate">{h.ticket}</div>
               <div className="col-span-3 text-[13px] truncate">{h.label || "—"}</div>
@@ -182,7 +187,7 @@ function SummaryTab({ res }: { res: PrelimRunResponse }) {
   const c = res.counts;
   return (
     <div className="grid grid-cols-12 gap-6">
-      <div className="col-span-12 lg:col-span-4 border-t border-[var(--line-strong)] pt-4">
+      <div className="col-span-12 lg:col-span-4 panel">
         <div className="flex items-center gap-2 text-[var(--ink-muted)] mb-3">
           <ShieldAlert size={15} /> 블라인드 위배
         </div>
@@ -196,7 +201,7 @@ function SummaryTab({ res }: { res: PrelimRunResponse }) {
           ))}
         </div>
       </div>
-      <div className="col-span-12 lg:col-span-4 border-t border-[var(--line-strong)] pt-4">
+      <div className="col-span-12 lg:col-span-4 panel">
         <div className="flex items-center gap-2 text-[var(--ink-muted)] mb-3">
           <FileSearch size={15} /> 제척
         </div>
@@ -210,7 +215,7 @@ function SummaryTab({ res }: { res: PrelimRunResponse }) {
           ))}
         </div>
       </div>
-      <div className="col-span-12 lg:col-span-4 border-t border-[var(--line-strong)] pt-4 text-[12px] text-[var(--ink-muted)]">
+      <div className="col-span-12 lg:col-span-4 panel text-[12px] text-[var(--ink-muted)]">
         <div className="mb-3 text-[var(--ink)]">참고</div>
         <p className="leading-6">
           블라인드 hit 은 substring + 5단계 FP 필터를 통과한 키워드. 최종 위배 판단은 검수자가 함.
