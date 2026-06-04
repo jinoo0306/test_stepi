@@ -59,11 +59,13 @@ export default function TuringMonitor() {
         title="Turing"
         description="AI가 만든 분석 결과를 믿어도 되는지 자동으로 점검합니다. ① 지원자가 제출한 자료에 없는 내용을 지어내지 않았는지, ② 결과가 빠짐없이 완성됐는지, ③ 한 명을 분석하는 데 얼마나 걸리는지를 최근 작업 기준으로 보여줍니다."
         aside={
-          <div className="w-[min(260px,80vw)] panel-soft flex flex-col gap-2.5 text-[13px]">
-            <div className="leader"><span className="text-[var(--ink-muted)]">자동 갱신</span><span /> <b className="font-mono">10초마다</b></div>
-            <div className="leader"><span className="text-[var(--ink-muted)]">점검한 작업</span><span /> <b className="font-mono">{data?.window.jobs ?? "—"}건</b></div>
-            <div className="leader"><span className="text-[var(--ink-muted)]">마지막 갱신</span><span /> <b className="font-mono">{updatedAt ? updatedAt.toLocaleTimeString("ko-KR") : "—"}</b></div>
-            <button onClick={load} className="btn-ghost inline-flex items-center justify-center gap-2 mt-1">
+          <div className="flex items-center gap-3 text-[13px] text-[var(--ink-muted)]">
+            {updatedAt && (
+              <span className="tabular-nums">
+                {updatedAt.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준
+              </span>
+            )}
+            <button onClick={load} className="btn-ghost inline-flex items-center gap-2">
               <RefreshCcw size={14} /> 새로고침
             </button>
           </div>
@@ -80,7 +82,7 @@ export default function TuringMonitor() {
         <MetricPanel
           icon={<ShieldCheck size={20} />}
           label="할루시네이션 방지"
-          hint="자료에 없는 내용을 지어내지 않은 비율 (높을수록 좋음)"
+          hint="분석이 제출 자료에 충실하게 작성된 정도"
           value={metrics?.hallucination_prevention.rate}
           suffix="%"
           detail={`자료 속 숫자 ${fmt(metrics?.hallucination_prevention.numeric_consistency_rate)} · 이름·기관 ${fmt(metrics?.hallucination_prevention.entity_consistency_rate)} 일치`}
@@ -88,7 +90,7 @@ export default function TuringMonitor() {
         <MetricPanel
           icon={<ShieldCheck size={20} />}
           label="결과 완성도"
-          hint="빠진 항목 없이 정상 작성된 비율"
+          hint="모든 분석 항목이 빠짐없이 작성된 정도"
           value={metrics?.format_compliance.rate}
           suffix="%"
           detail={`${metrics?.format_compliance.passed ?? 0}/${metrics?.format_compliance.total ?? 0}건 정상 완성`}
@@ -96,9 +98,10 @@ export default function TuringMonitor() {
         <MetricPanel
           icon={<Clock3 size={20} />}
           label="1명당 분석 시간"
-          hint="지원자 한 명을 분석하는 평균 시간"
+          hint="지원자 한 명당 평균 소요 시간"
           value={perApplicantMinutes}
           suffix="분/명"
+          decimals={2}
           detail={`보통 ${minutes(metrics?.response_time.p50_seconds)} · 오래 걸릴 때 ${minutes(metrics?.response_time.p95_seconds)}`}
         />
       </section>
@@ -199,8 +202,8 @@ export default function TuringMonitor() {
         </div>
         <div className="col-span-12 lg:col-span-8 panel">
           <div className="grid grid-cols-2 gap-4 text-[13px]">
-            <StatusItem label="점검한 지원자 수" value={`${metrics?.hallucination_prevention.samples ?? 0}명`} />
-            <StatusItem label="1명당 처리 시간(보통)" value={minutes(metrics?.response_time.p50_seconds)} />
+            <StatusItem label="분석 대상 지원자" value={`${metrics?.hallucination_prevention.samples ?? 0}명`} />
+            <StatusItem label="1명당 평균 처리 시간" value={minutes(metrics?.response_time.p50_seconds)} />
           </div>
         </div>
       </section>
@@ -208,7 +211,7 @@ export default function TuringMonitor() {
   );
 }
 
-function MetricPanel({ icon, label, hint, value, suffix, detail }: { icon: React.ReactNode; label: string; hint: string; value?: number | null; suffix: string; detail: string }) {
+function MetricPanel({ icon, label, hint, value, suffix, detail, decimals = 1 }: { icon: React.ReactNode; label: string; hint: string; value?: number | null; suffix: string; detail: string; decimals?: number }) {
   return (
     <div className="col-span-12 lg:col-span-4 panel min-h-[170px] relative overflow-hidden">
       <span className="absolute left-0 top-0 h-full w-[3px] bg-[var(--secondary)]" />
@@ -217,7 +220,7 @@ function MetricPanel({ icon, label, hint, value, suffix, detail }: { icon: React
       </div>
       <div className="mt-1.5 text-[12px] text-[var(--ink-muted)]">{hint}</div>
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="numeral text-[52px] leading-none text-[var(--ink)]">{value == null ? "—" : value.toFixed(1)}</span>
+        <span className="numeral text-[52px] leading-none text-[var(--ink)]">{value == null ? "—" : value.toFixed(decimals)}</span>
         <span className="text-[14px] font-medium text-[var(--ink-muted)]">{suffix}</span>
       </div>
       <div className="mt-4 pt-3 border-t border-[var(--line)] text-[12.5px] text-[var(--ink-muted)]">{detail}</div>
@@ -236,7 +239,7 @@ function percent(value?: number | null) {
 }
 
 function minutes(value?: number | null) {
-  return value == null ? "—" : `${(value / 60).toFixed(1)}분`;
+  return value == null ? "—" : `${(value / 60).toFixed(2)}분`;
 }
 
 function fmt(value?: number | null) {
