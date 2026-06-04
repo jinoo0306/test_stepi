@@ -68,7 +68,7 @@ export default function NewJobPage() {
         try {
           const bulk = await api.bulkUploadPapers(r.job_id, pdfZip);
           setZipSummary(
-            `PDF ${bulk.queued}건 분석 큐잉 / 중복 ${bulk.duplicate_skipped} / 미매칭 ${bulk.unmatched_applicants.length}명`,
+            `논문 PDF ${bulk.queued}건 분석을 시작했습니다 · 중복 제외 ${bulk.duplicate_skipped}건 · 연결 안 된 지원자 ${bulk.unmatched_applicants.length}명`,
           );
         } catch (zerr) {
           // zip 업로드 실패해도 job 자체는 진행 — 사용자가 상세 페이지에서 재시도 가능
@@ -100,7 +100,7 @@ export default function NewJobPage() {
       <form onSubmit={submit} className="space-y-10 mt-6 panel">
         <label className="block">
           <span className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-            엑셀 파일 (.xlsx)
+            자기소개서 (.xlsx)
           </span>
           <label className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--bg-2)]/40 hover:bg-[var(--bg-2)] transition cursor-pointer py-10 px-6">
             <input
@@ -130,9 +130,9 @@ export default function NewJobPage() {
               <>
                 <UploadCloud size={28} strokeWidth={1.4} className="text-[var(--ink-muted)]" />
                 <div className="text-center">
-                  <div className="text-sm font-medium">파일을 끌어놓거나 클릭해서 선택하세요</div>
+                  <div className="text-sm font-medium">자기소개서 엑셀을 끌어놓거나 클릭해서 선택하세요</div>
                   <div className="text-xs text-[var(--ink-muted)] mt-1">
-                    .xlsx · 시트당 한 직군 권장
+                    지원자들의 자기소개서가 담긴 엑셀(.xlsx) 파일
                   </div>
                 </div>
               </>
@@ -160,7 +160,7 @@ export default function NewJobPage() {
 
         <label className="block">
           <span className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-            지원정보 xlsx (선택 — 학술지 게재 메타)
+            지원정보 (선택 · 논문·학술지 게재 내역)
           </span>
           <label className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)] transition cursor-pointer py-7 px-6">
             <input
@@ -189,9 +189,9 @@ export default function NewJobPage() {
               <>
                 <UploadCloud size={22} strokeWidth={1.4} className="text-[var(--ink-muted)]" />
                 <div className="text-center">
-                  <div className="text-sm font-medium">지원정보 xlsx 를 첨부 (논문 메타 join)</div>
+                  <div className="text-sm font-medium">지원정보 엑셀을 끌어놓거나 클릭해서 선택하세요</div>
                   <div className="text-xs text-[var(--ink-muted)] mt-1">
-                    applicant_id 로 자소서와 매칭. 없으면 학술지 메타 없이 진행.
+                    지원자별 논문·학술지 게재 내역이 담긴 엑셀입니다. 같은 지원자 번호로 자기소개서와 자동 연결됩니다. 없으면 이 정보 없이 분석합니다.
                   </div>
                 </div>
               </>
@@ -219,7 +219,7 @@ export default function NewJobPage() {
 
         <label className="block">
           <span className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-            논문 PDF zip (선택)
+            논문 PDF (선택 · 압축파일)
           </span>
           <label className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)] transition cursor-pointer py-7 px-6">
             <input
@@ -242,9 +242,9 @@ export default function NewJobPage() {
               <>
                 <UploadCloud size={22} strokeWidth={1.4} className="text-[var(--ink-muted)]" />
                 <div className="text-center">
-                  <div className="text-sm font-medium">attachments/&#123;applicant_id&#125;/*.pdf 구조 zip</div>
+                  <div className="text-sm font-medium">논문 PDF 압축파일(zip)을 끌어놓거나 클릭해서 선택하세요</div>
                   <div className="text-xs text-[var(--ink-muted)] mt-1">
-                    한 번에 일괄 업로드. 폴더명이 자소서 applicant_id 와 일치해야 매칭.
+                    지원자 번호로 된 폴더를 만들어 그 안에 해당 지원자의 논문 PDF를 넣고, 전체를 zip으로 압축해 올려주세요. 폴더 이름이 지원자 번호와 같아야 자동 연결됩니다.
                   </div>
                 </div>
               </>
@@ -288,9 +288,9 @@ export default function NewJobPage() {
           </span>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
-              { v: "full", t: "전체", d: "요약 + 채점 + 면접질문" },
-              { v: "score_only", t: "채점만", d: "직무적합도 5축만 (~빠름)" },
-              { v: "questions_only", t: "면접질문만", d: "RAG 질문 6–8개" },
+              { v: "full", t: "전체", d: "요약 + 점수 + 면접질문 모두" },
+              { v: "score_only", t: "채점만", d: "직무적합도 점수만 (빠름)" },
+              { v: "questions_only", t: "면접질문만", d: "추천 면접질문 6~8개만" },
             ].map((opt) => (
               <label
                 key={opt.v}
