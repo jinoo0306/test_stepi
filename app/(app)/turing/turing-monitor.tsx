@@ -49,6 +49,11 @@ export default function TuringMonitor() {
     metrics?.response_time.avg_seconds_per_applicant == null
       ? null
       : metrics.response_time.avg_seconds_per_applicant / 60;
+  const perAppTimes = (data?.jobs ?? [])
+    .map((j) => j.avg_seconds_per_applicant)
+    .filter((v): v is number => v != null);
+  const tMin = perAppTimes.length ? Math.min(...perAppTimes) : null;
+  const tMax = perAppTimes.length ? Math.max(...perAppTimes) : null;
   const latestRows = useMemo(() => data?.jobs.slice(0, 12) ?? [], [data]);
 
   return (
@@ -85,7 +90,7 @@ export default function TuringMonitor() {
           hint="분석이 제출 자료에 충실하게 작성된 정도"
           value={metrics?.hallucination_prevention.rate}
           suffix="%"
-          detail={`자료 속 숫자 ${fmt(metrics?.hallucination_prevention.numeric_consistency_rate)} · 이름·기관 ${fmt(metrics?.hallucination_prevention.entity_consistency_rate)} 일치`}
+          detail={`숫자 일치 ${fmt(metrics?.hallucination_prevention.numeric_consistency_rate)} · 이름·기관 일치 ${fmt(metrics?.hallucination_prevention.entity_consistency_rate)}`}
         />
         <MetricPanel
           icon={<ShieldCheck size={20} />}
@@ -93,7 +98,7 @@ export default function TuringMonitor() {
           hint="모든 분석 항목이 빠짐없이 작성된 정도"
           value={metrics?.format_compliance.rate}
           suffix="%"
-          detail={`${metrics?.format_compliance.passed ?? 0}/${metrics?.format_compliance.total ?? 0}건 정상 완성`}
+          detail={`전체 ${(metrics?.format_compliance.total ?? 0).toLocaleString()}개 항목 중 ${(metrics?.format_compliance.passed ?? 0).toLocaleString()}개 충족`}
         />
         <MetricPanel
           icon={<Clock3 size={20} />}
@@ -102,7 +107,7 @@ export default function TuringMonitor() {
           value={perApplicantMinutes}
           suffix="분/명"
           decimals={2}
-          detail={`보통 ${minutes(metrics?.response_time.p50_seconds)} · 오래 걸릴 때 ${minutes(metrics?.response_time.p95_seconds)}`}
+          detail={tMin != null && tMax != null && tMax - tMin > 1 ? `최단 ${minutes(tMin)} · 최장 ${minutes(tMax)}` : "최근 분석 작업 기준"}
         />
       </section>
 
