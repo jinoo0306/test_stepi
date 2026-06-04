@@ -45,13 +45,14 @@ export default function TuringMonitor() {
   }, []);
 
   const metrics = data?.metrics;
-  const perApplicantMinutes =
-    metrics?.response_time.avg_seconds_per_applicant == null
-      ? null
-      : metrics.response_time.avg_seconds_per_applicant / 60;
+  // 평균·최단·최장·표를 모두 '표시되는 작업별 1명당 시간' 한 집합에서 계산해 서로 모순되지 않게 한다.
   const perAppTimes = (data?.jobs ?? [])
     .map((j) => j.avg_seconds_per_applicant)
     .filter((v): v is number => v != null);
+  const perAppAvgSec = perAppTimes.length
+    ? perAppTimes.reduce((a, b) => a + b, 0) / perAppTimes.length
+    : null;
+  const perApplicantMinutes = perAppAvgSec == null ? null : perAppAvgSec / 60;
   const tMin = perAppTimes.length ? Math.min(...perAppTimes) : null;
   const tMax = perAppTimes.length ? Math.max(...perAppTimes) : null;
   const latestRows = useMemo(() => data?.jobs.slice(0, 12) ?? [], [data]);
@@ -218,7 +219,7 @@ export default function TuringMonitor() {
         <div className="col-span-12 lg:col-span-8 panel">
           <div className="grid grid-cols-2 gap-4 text-[13px]">
             <StatusItem label="분석 대상 지원자" value={`${metrics?.hallucination_prevention.samples ?? 0}명`} />
-            <StatusItem label="1명당 평균 처리 시간" value={minutes(metrics?.response_time.p50_seconds)} />
+            <StatusItem label="1명당 평균 처리 시간" value={minutes(perAppAvgSec)} />
           </div>
         </div>
       </section>
