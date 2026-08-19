@@ -5,11 +5,16 @@ import { useState, type ReactNode } from "react";
 interface Props {
   essayContent: ReactNode;
   paperContent: ReactNode;
+  talentContent: ReactNode;
 }
 
-type Tab = "essay" | "paper";
+type Tab = "essay" | "paper" | "talent";
 
-export default function DetailTabs({ essayContent, paperContent }: Props) {
+export default function DetailTabs({
+  essayContent,
+  paperContent,
+  talentContent,
+}: Props) {
   const [tab, setTab] = useState<Tab>("essay");
 
   return (
@@ -21,9 +26,13 @@ export default function DetailTabs({ essayContent, paperContent }: Props) {
         <TabButton active={tab === "paper"} onClick={() => setTab("paper")}>
           학술지 게재
         </TabButton>
+        <TabButton active={tab === "talent"} onClick={() => setTab("talent")}>
+          인재상 유형
+        </TabButton>
       </div>
       <div className={tab === "essay" ? "block" : "hidden"}>{essayContent}</div>
       <div className={tab === "paper" ? "block" : "hidden"}>{paperContent}</div>
+      <div className={tab === "talent" ? "block" : "hidden"}>{talentContent}</div>
     </div>
   );
 }

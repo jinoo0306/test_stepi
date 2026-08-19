@@ -6,8 +6,12 @@ import FeedbackButtons from "@/components/feedback-buttons";
 import RegenerateSummaryButton from "@/components/regenerate-summary-button";
 import PapersSection from "@/components/papers-section";
 import TimelineSection from "@/components/timeline-section";
+import TimelineBar from "@/components/timeline-bar";
 import DeptFitV2Section from "@/components/dept-fit-v2-section";
 import DetailTabs from "@/components/detail-tabs";
+import TalentTypesSection from "@/components/talent-types-section";
+import AiUsageSection from "@/components/ai-usage-section";
+import { AI_USAGE_MOCK } from "@/lib/ai-usage";
 import InterviewQuestionsToggle from "@/components/interview-questions-toggle";
 import { cleanReason } from "@/lib/clean-reason";
 
@@ -86,6 +90,7 @@ export default async function ApplicantDetailPage({
       ? "행정직 미산출"
       : "논문 미첨부";
 
+
   return (
     <div className="px-6 lg:px-10 py-8 max-w-[1480px] mx-auto fade-up">
       <Link
@@ -112,6 +117,12 @@ export default async function ApplicantDetailPage({
           </div>
           <div className="flex items-stretch">
             <HeaderStat label="직무적합 평균" value={fitAvg100.toFixed(0)} unit="/ 100" accent />
+            <HeaderStat
+              label="AI 문체 유사도"
+              value={String(AI_USAGE_MOCK.overall)}
+              unit="%"
+              sub="시범 표시 (미연동)"
+            />
             <HeaderStat label="상위 부서" value={topDeptV2?.dept_name ?? "—"} sub={deptSub} text />
             <HeaderStat
               label="학술지 게재"
@@ -127,9 +138,9 @@ export default async function ApplicantDetailPage({
         <DetailTabs
           essayContent={
             <>
-              <div className="flex flex-col lg:flex-row gap-5 mt-6 items-start">
-                {/* ── 메인 컬럼 (좌) — 우측 레일과 높이 독립, 여백 없음 ── */}
-                <div className="flex-1 min-w-0 flex flex-col gap-5">
+              <div className="mt-6">
+                {/* ── 단일 컬럼 — 학력·이력이 가운데로 들어오며 우측 레일 폐지 ── */}
+                <div className="min-w-0 flex flex-col gap-5">
                 {/* 종합 요약 */}
                 <Card
                   title="종합 요약"
@@ -163,6 +174,18 @@ export default async function ApplicantDetailPage({
                       ))}
                     </ul>
                   )}
+                </Card>
+
+                {/* 학력 · 이력 — 연혁 바 + 상세 목록 (우측 레일에서 이동) */}
+                <Card title="학력 · 이력">
+                  <TimelineBar
+                    education={sourceApplicant?.education}
+                    career={sourceApplicant?.career}
+                  />
+                  <TimelineSection
+                    education={sourceApplicant?.education}
+                    career={sourceApplicant?.career}
+                  />
                 </Card>
 
                 {/* 역량 진단 — radar 2개 나란히 (동일 높이) */}
@@ -252,6 +275,17 @@ export default async function ApplicantDetailPage({
                   }
                 >
                   <DeptFitV2Section jobId={id} applicantId={decodedAppId} />
+                </Card>
+
+                {/* AI 문체 유사도 근거 — 헤더 통계줄의 숫자를 풀어서 설명한다.
+                    「자기소개서 핵심」 **바로 위**에 둔다. 이건 자소서를 얼마나 믿고 읽을지
+                    알려주는 정보라 대상보다 먼저 와야 한다. 문항별 점수를 먼저 보고
+                    바로 아래에서 그 문항 내용을 확인하는 동선이 이어진다. */}
+                <Card
+                  title="AI 문체 유사도 근거"
+                  desc="자기소개서 문체가 AI가 쓴 글과 얼마나 닮았는지입니다. 아직 백엔드 미연동 — 점수는 화면 확인용 예시값입니다."
+                >
+                  <AiUsageSection />
                 </Card>
 
                 {/* 자기소개서 핵심 — 문항별로 묶어 정리 */}
@@ -370,16 +404,6 @@ export default async function ApplicantDetailPage({
                 )}
                 </div>
                 {/* /메인 컬럼 */}
-
-                {/* ── 우측 레일 (독립 컬럼 — 메인과 높이 결합 없음) ── */}
-                <aside className="w-full lg:w-[340px] shrink-0 flex flex-col gap-5">
-                  <Card title="학력 · 이력">
-                    <TimelineSection
-                      education={sourceApplicant?.education}
-                      career={sourceApplicant?.career}
-                    />
-                  </Card>
-                </aside>
               </div>
             </>
           }
@@ -398,6 +422,15 @@ export default async function ApplicantDetailPage({
               }
             >
               <PapersSection jobId={id} applicantId={decodedAppId} />
+            </Card>
+          }
+          talentContent={
+            <Card
+              title="인재상 유형 도달도"
+              desc="34개 인재상 유형에 대한 지원자의 도달 정도입니다. 아직 백엔드 미연동 — 점수는 화면 확인용 예시값입니다."
+              className="mt-6"
+            >
+              <TalentTypesSection jobId={id} />
             </Card>
           }
         />
