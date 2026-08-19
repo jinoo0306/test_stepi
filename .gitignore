@@ -40,3 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .polaris/
+
+# 도구가 남기는 백업본 (.next.rootbak.NNN / next-env.d.ts.rootbak.NNN)
+*.rootbak.*
+
+# 에이전트 세션 상태
+.omc/
