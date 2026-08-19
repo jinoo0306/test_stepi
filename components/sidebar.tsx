@@ -12,10 +12,13 @@ import {
   ChevronsRight,
   Activity,
   ShieldAlert,
+  SlidersHorizontal,
   LogOut,
   type LucideIcon,
 } from "lucide-react";
 import StepiLogo from "./stepi-logo";
+import TalentSelectModal from "./talent-select-modal";
+import { useTalentSelection, MAX_TALENT_SELECTION } from "@/lib/talent-selection";
 
 const STORAGE_KEY = "stepi-sidebar-collapsed";
 
@@ -34,6 +37,14 @@ export default function Sidebar() {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+
+  // 분석작업(공고) 안에 있을 때만 인재상 메뉴를 띄운다.
+  //   /jobs/{id}...  → 공고 ID
+  //   /jobs/new      → 새 분석 만들기이므로 제외
+  const jobMatch = pathname.match(/^\/jobs\/([^/]+)/);
+  const jobId = jobMatch && jobMatch[1] !== "new" ? jobMatch[1] : null;
+  const [talentOpen, setTalentOpen] = useState(false);
+  const talentSelection = useTalentSelection(jobId ?? "");
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -210,7 +221,50 @@ export default function Sidebar() {
             );
           })
         )}
+
+        {/* 이 공고 — 분석작업 안에서만 나타나는 상황별 메뉴.
+            링크가 아니라 팝업을 여는 버튼이라 features/allLeaves 배열에 못 넣는다. */}
+        {jobId && (
+          <div className={collapsed ? "" : "mt-2 pt-4 border-t border-[var(--line)]"}>
+            {!collapsed && (
+              <div className="px-2.5 pb-1 text-[11.5px] font-bold uppercase tracking-[0.06em] text-[var(--ink-soft)]">
+                이 공고
+              </div>
+            )}
+            <button
+              onClick={() => setTalentOpen(true)}
+              title="인재상 선택"
+              className={
+                collapsed
+                  ? "flex items-center justify-center w-10 h-10 rounded-md text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--bg-2)] transition"
+                  : "flex w-full items-center gap-2.5 px-2.5 py-2 rounded-md text-[15.5px] font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--bg-2)] transition"
+              }
+            >
+              <SlidersHorizontal
+                size={collapsed ? 19 : 18}
+                strokeWidth={collapsed ? 1.8 : 2}
+              />
+              {!collapsed && (
+                <>
+                  인재상 선택
+                  <span className="ml-auto text-[12.5px] font-medium tabular-nums text-[var(--ink-muted)]">
+                    {talentSelection.length} / {MAX_TALENT_SELECTION}
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </nav>
+
+      {/* 팝업 — 열림 상태는 사이드바가 들고 있다 */}
+      {jobId && talentOpen && (
+        <TalentSelectModal
+          jobId={jobId}
+          current={talentSelection}
+          onClose={() => setTalentOpen(false)}
+        />
+      )}
 
       {/* 하단 — 관리 메뉴 + 로그아웃 */}
       <div className={`${collapsed ? "px-2 py-4 flex flex-col items-center gap-2" : "px-3 lg:px-4 py-4"} border-t border-[var(--line-strong)]`}>
