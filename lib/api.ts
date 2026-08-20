@@ -228,6 +228,18 @@ export interface FeedbackEntry {
   updated_at: string;
 }
 
+/** 백엔드가 주고받는 인재상 세트. lib/talent-selection.ts 의 TalentSet 과 같은 모양 */
+export interface TalentSetPayload {
+  id: string;
+  name: string;
+  nos: number[];
+}
+
+export interface TalentSelectionResponse {
+  job_id: string;
+  sets: TalentSetPayload[];
+}
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -243,6 +255,14 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // 공고별 선정 인재상 세트 (lib/talent-selection.ts 가 쓴다)
+  getTalentSelection: (id: string) =>
+    http<TalentSelectionResponse>(`/analysis-jobs/${id}/talent-selection`),
+  putTalentSelection: (id: string, sets: TalentSetPayload[]) =>
+    http<TalentSelectionResponse>(`/analysis-jobs/${id}/talent-selection`, {
+      method: "PUT",
+      body: JSON.stringify({ sets }),
+    }),
   // 핵심인재(#1) 레이더의 합격자 평균 기준선
   getCorePassedBaseline: () =>
     http<{ core_passed_baseline: Record<string, number>; n_passed_matched: number; scale: string }>(

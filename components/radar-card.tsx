@@ -20,6 +20,10 @@ interface Props {
   /** 본 시리즈 / 기준선 범례 라벨 */
   valueLabel?: string;
   baselineLabel?: string;
+  /** 그림 높이(px). 좁은 칸에 여러 개를 나란히 놓을 때만 줄인다 */
+  height?: number;
+  /** 꼭짓점 라벨 크기(px). 칸이 좁아지면 라벨끼리 붙어 읽기 어렵다 */
+  labelSize?: number;
 }
 
 export default function RadarCard({
@@ -29,6 +33,8 @@ export default function RadarCard({
   baseline = null,
   valueLabel = "지원자",
   baselineLabel = "합격자 평균",
+  height = 320,
+  labelSize = 13,
 }: Props) {
   const hasBaseline = baseline != null && Object.keys(baseline).length > 0;
   const merged = data.map((d) => ({
@@ -37,11 +43,11 @@ export default function RadarCard({
   }));
 
   return (
-    <div className="h-[320px] w-full">
+    <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={merged} outerRadius="65%">
           <PolarGrid stroke="var(--line)" />
-          <PolarAngleAxis dataKey="axis" tick={{ fill: "var(--ink)", fontSize: 13, fontWeight: 600 }} />
+          <PolarAngleAxis dataKey="axis" tick={{ fill: "var(--ink)", fontSize: labelSize, fontWeight: 600 }} />
           <PolarRadiusAxis domain={[0, max]} tick={false} axisLine={false} />
           {/* 합격자 평균 — 연한 음영(아래쪽에 먼저 그려 지원자 라인이 위로) */}
           {hasBaseline && (

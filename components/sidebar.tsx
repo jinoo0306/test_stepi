@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import StepiLogo from "./stepi-logo";
 import TalentSelectModal from "./talent-select-modal";
-import { useTalentSelection, MAX_TALENT_SELECTION } from "@/lib/talent-selection";
+import { useTalentSets, retryTalentSets, MAX_TALENT_SETS } from "@/lib/talent-selection";
 
 const STORAGE_KEY = "stepi-sidebar-collapsed";
 
@@ -44,7 +44,7 @@ export default function Sidebar() {
   const jobMatch = pathname.match(/^\/jobs\/([^/]+)/);
   const jobId = jobMatch && jobMatch[1] !== "new" ? jobMatch[1] : null;
   const [talentOpen, setTalentOpen] = useState(false);
-  const talentSelection = useTalentSelection(jobId ?? "");
+  const { sets: talentSets, status: talentStatus } = useTalentSets(jobId ?? "");
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -231,13 +231,24 @@ export default function Sidebar() {
                 이 공고
               </div>
             )}
+            {/* 불러오기 전에는 못 열게 막는다.
+                이때 화면에 보이는 건 서버값이 아니라 기본 세트인데, 그대로 저장하면
+                서버에 있던 진짜 값을 덮어쓴다. 실패했을 때도 같은 이유로 막는다. */}
             <button
               onClick={() => setTalentOpen(true)}
-              title="인재상 선택"
+              disabled={talentStatus !== "ready"}
+              title={
+                talentStatus === "loading"
+                  ? "인재상을 불러오는 중입니다"
+                  : talentStatus === "error"
+                    ? "인재상을 불러오지 못했습니다"
+                    : "인재상 선택"
+              }
               className={
-                collapsed
+                (collapsed
                   ? "flex items-center justify-center w-10 h-10 rounded-md text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--bg-2)] transition"
-                  : "flex w-full items-center gap-2.5 px-2.5 py-2 rounded-md text-[15.5px] font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--bg-2)] transition"
+                  : "flex w-full items-center gap-2.5 px-2.5 py-2 rounded-md text-[15.5px] font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--bg-2)] transition") +
+                " disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               }
             >
               <SlidersHorizontal
@@ -248,11 +259,25 @@ export default function Sidebar() {
                 <>
                   인재상 선택
                   <span className="ml-auto text-[12.5px] font-medium tabular-nums text-[var(--ink-muted)]">
-                    {talentSelection.length} / {MAX_TALENT_SELECTION}
+                    {talentStatus === "loading"
+                      ? "불러오는 중"
+                      : talentStatus === "error"
+                        ? "불러오기 실패"
+                        : `${talentSets.length} / ${MAX_TALENT_SETS} 세트`}
                   </span>
                 </>
               )}
             </button>
+            {/* 실패했을 때 새로고침 없이 다시 시도할 길.
+                loadOnce 는 한 공고에 한 번만 요청하므로 이 버튼이 유일한 출구다. */}
+            {!collapsed && talentStatus === "error" && (
+              <button
+                onClick={() => retryTalentSets(jobId)}
+                className="mt-1 w-full px-2.5 text-left text-[12.5px] text-[var(--secondary-2)] hover:underline"
+              >
+                다시 시도
+              </button>
+            )}
           </div>
         )}
       </nav>
@@ -261,7 +286,7 @@ export default function Sidebar() {
       {jobId && talentOpen && (
         <TalentSelectModal
           jobId={jobId}
-          current={talentSelection}
+          current={talentSets}
           onClose={() => setTalentOpen(false)}
         />
       )}
