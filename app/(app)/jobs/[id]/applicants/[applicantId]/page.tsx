@@ -283,7 +283,7 @@ export default async function ApplicantDetailPage({
                     바로 아래에서 그 문항 내용을 확인하는 동선이 이어진다. */}
                 <Card
                   title="AI 문체 유사도 근거"
-                  desc="자기소개서 문체가 AI가 쓴 글과 얼마나 닮았는지입니다. 아직 백엔드 미연동 — 점수는 화면 확인용 예시값입니다."
+                  desc="자기소개서 문체가 AI가 쓴 글과 얼마나 닮았는지입니다. 아직 백엔드가 연결되지 않아 점수는 화면 확인용 예시값입니다."
                 >
                   <AiUsageSection />
                 </Card>
@@ -427,7 +427,7 @@ export default async function ApplicantDetailPage({
           talentContent={
             <Card
               title="인재상 유형 도달도"
-              desc="34개 인재상 유형에 대한 지원자의 도달 정도입니다. 아직 백엔드 미연동 — 점수는 화면 확인용 예시값입니다."
+              desc="34개 인재상 유형에 대한 지원자의 도달 정도입니다. 아직 백엔드가 연결되지 않아 점수는 화면 확인용 예시값입니다."
               className="mt-6"
             >
               <TalentTypesSection jobId={id} />
