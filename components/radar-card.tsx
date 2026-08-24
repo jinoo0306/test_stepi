@@ -12,7 +12,8 @@ import {
 } from "recharts";
 
 interface Props {
-  data: Array<{ axis: string; value: number }>;
+  /** value 가 null 이면 그 꼭짓점은 그리지 않는다 (판정 불가와 0점은 다르다) */
+  data: Array<{ axis: string; value: number | null }>;
   color?: string;
   max?: number;
   /** 비교 기준선 (예: 합격자 평균) — 축 이름 → 값. 연한 음영으로 함께 표시 */
