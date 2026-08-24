@@ -118,10 +118,10 @@ export default async function ApplicantDetailPage({
           <div className="flex items-stretch">
             <HeaderStat label="직무적합 평균" value={fitAvg100.toFixed(0)} unit="/ 100" accent />
             <HeaderStat
-              label="AI 문체 유사도"
+              label="AI 사용 의심도"
               value={String(AI_USAGE_MOCK.overall)}
               unit="%"
-              sub="시범 표시 (미연동)"
+              sub="예시"
             />
             <HeaderStat label="상위 부서" value={topDeptV2?.dept_name ?? "—"} sub={deptSub} text />
             <HeaderStat
@@ -277,13 +277,13 @@ export default async function ApplicantDetailPage({
                   <DeptFitV2Section jobId={id} applicantId={decodedAppId} />
                 </Card>
 
-                {/* AI 문체 유사도 근거 — 헤더 통계줄의 숫자를 풀어서 설명한다.
+                {/* AI 사용 의심도 근거 — 헤더 통계줄의 숫자를 풀어서 설명한다.
                     「자기소개서 핵심」 **바로 위**에 둔다. 이건 자소서를 얼마나 믿고 읽을지
                     알려주는 정보라 대상보다 먼저 와야 한다. 문항별 점수를 먼저 보고
                     바로 아래에서 그 문항 내용을 확인하는 동선이 이어진다. */}
                 <Card
-                  title="AI 문체 유사도 근거"
-                  desc="자기소개서 문체가 AI가 쓴 글과 얼마나 닮았는지입니다. 아직 백엔드가 연결되지 않아 점수는 화면 확인용 예시값입니다."
+                  title="AI 사용 의심도 근거"
+                  desc="자기소개서 문체가 AI가 쓴 글과 얼마나 닮았는지입니다."
                 >
                   <AiUsageSection />
                 </Card>

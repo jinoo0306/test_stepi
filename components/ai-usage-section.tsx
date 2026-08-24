@@ -2,11 +2,11 @@ import { AlertTriangle } from "lucide-react";
 import { AI_USAGE_MOCK, aiUsageLevel, type AiUsageMetric } from "@/lib/ai-usage";
 
 /**
- * AI 문체 유사도 근거 — 헤더 통계줄의 숫자 하나를 풀어서 설명한다.
+ * AI 사용 의심도 근거 — 헤더 통계줄의 숫자 하나를 풀어서 설명한다.
  *
  * 이 화면에 이미 있는 관계를 그대로 따랐다:
  *   헤더 「직무적합 평균 76/100」  →  본문 「직무적합 역량별 근거」 카드
- *   헤더 「AI 문체 유사도 80%」    →  본문 이 카드
+ *   헤더 「AI 사용 의심도 80%」    →  본문 이 카드
  *
  * 두 축으로 설명한다. 종합 점수 하나만으로는 면접관이 판단할 근거가 없다.
  *   ① 문항별  — 어느 문항이 점수를 끌어올렸나
@@ -21,7 +21,8 @@ const { overall, questions, metrics } = AI_USAGE_MOCK;
 export default function AiUsageSection() {
   const level = aiUsageLevel(overall);
   // 점수를 끌어올린 문항을 짚어준다. 여러 개면 가장 높은 하나.
-  const worst = questions.reduce((a, b) => (b.score > a.score ? b : a), questions[0]);
+  // 실데이터가 들어오면 빈 배열이 올 수 있으므로 reduce 의 초기값에 기대지 않는다.
+  const top = questions.length > 0 ? questions.reduce((a, b) => (b.score > a.score ? b : a)) : null;
 
   return (
     <div>
@@ -34,6 +35,12 @@ export default function AiUsageSection() {
           .stepi-ai-grow { animation: none !important; }
         }
       `}</style>
+
+      {/* 이 카드 전체가 예시라는 사실을 숫자보다 먼저 읽히게 맨 위에 둔다 */}
+      <p className="mb-4 text-[14px] leading-[1.7] text-[var(--ink-2)]">
+        <b className="font-bold text-[var(--ink)]">이 카드의 숫자는 모두 예시입니다.</b> 아직 채점이
+        연결되지 않아 모든 지원자에게 같은 값이 나옵니다.
+      </p>
 
       {/* ── 종합 ── */}
       <div className="flex items-baseline gap-3 flex-wrap">
@@ -53,13 +60,16 @@ export default function AiUsageSection() {
           {level.text}
         </span>
       </div>
-      <p className="mt-2.5 text-[14px] leading-[1.7] text-[var(--ink-2)]">
-        {questions.length}개 문항 중 <b className="font-semibold">{worst.no}번 「{worst.title}」</b>
-        의 점수가 {worst.score}% 로 가장 높습니다. 아래 지표를 함께 확인해 주세요.
-      </p>
+      {top && (
+        <p className="mt-2.5 text-[14px] leading-[1.7] text-[var(--ink-2)]">
+          {questions.length}개 문항 중{" "}
+          <b className="font-semibold">{top.no}번 「{top.title}」</b>의 점수가 {top.score}% 로 가장
+          높습니다.
+        </p>
+      )}
 
       {/* ── 문항별 ── */}
-      <Block title="문항별 점수" desc="문항마다 따로 계산합니다. 한 문항만 높은 경우가 흔합니다.">
+      <Block title="문항별 점수" desc="문항마다 따로 계산합니다.">
         <ul className="space-y-3.5">
           {questions.map((q, i) => (
             <li key={q.no}>
@@ -67,7 +77,7 @@ export default function AiUsageSection() {
                 label={`${q.no}. ${q.title}`}
                 score={q.score}
                 index={i}
-                highlight={q.no === worst.no}
+                highlight={q.no === top?.no}
               />
             </li>
           ))}
@@ -157,7 +167,8 @@ function Row({
         <div
           className="stepi-ai-grow h-full rounded-full"
           style={{
-            width: `${score}%`,
+            // 실데이터가 0-1 스케일이나 100 초과로 오면 레이아웃이 깨진다
+            width: `${Math.max(0, Math.min(100, score))}%`,
             // 높은 점수만 눈에 띄게 한다 — 전부 강한 색이면 어디를 봐야 할지 알 수 없다
             background:
               score >= 75
