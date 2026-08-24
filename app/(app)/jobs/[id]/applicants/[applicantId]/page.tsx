@@ -14,6 +14,7 @@ import AiUsageSection from "@/components/ai-usage-section";
 import { AI_USAGE_MOCK } from "@/lib/ai-usage";
 import InterviewQuestionsToggle from "@/components/interview-questions-toggle";
 import { cleanReason } from "@/lib/clean-reason";
+import ApplicantPdfButton from "@/components/applicant-pdf-button";
 
 export const dynamic = "force-dynamic";
 
@@ -93,12 +94,15 @@ export default async function ApplicantDetailPage({
 
   return (
     <div className="px-6 lg:px-10 py-8 max-w-[1480px] mx-auto fade-up">
-      <Link
-        href={`/jobs/${id}`}
-        className="inline-flex items-center gap-1 text-[13.5px] text-[var(--ink-muted)] hover:text-[var(--ink)] mb-5 transition"
-      >
-        <ChevronLeft size={15} /> 분석 보고로 돌아가기
-      </Link>
+      <div className="flex items-center justify-between gap-4 mb-5">
+        <Link
+          href={`/jobs/${id}`}
+          className="inline-flex items-center gap-1 text-[13.5px] text-[var(--ink-muted)] hover:text-[var(--ink)] transition"
+        >
+          <ChevronLeft size={15} /> 분석 보고로 돌아가기
+        </Link>
+        <ApplicantPdfButton jobId={id} applicantId={decodedAppId} variant="button" />
+      </div>
 
       {/* ── Highlights 헤더 카드 (Salesforce record highlights: 식별정보 + 핵심 지표 상시 노출) ── */}
       <header className="panel">

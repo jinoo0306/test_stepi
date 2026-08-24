@@ -121,6 +121,7 @@ export default function Sidebar() {
 
   return (
     <aside
+      data-print-hide
       className={`hidden md:flex ${widthClass} shrink-0 flex-col md:sticky md:top-0 md:h-screen border-r border-[var(--line-strong)] bg-[var(--bg)] transition-[width] duration-200`}
     >
       {/* 헤더 — 로고 + 접기 토글 */}

@@ -304,3 +304,47 @@ body {
   font-family: var(--font-sans);
   letter-spacing: 0.01em;
 }
+
+/* ===== 인쇄 (지원자 PDF 저장) =====
+   화면과 같은 색·카드를 그대로 종이에 옮긴다. 브라우저 기본값이 배경색을 지우므로
+   print-color-adjust 로 막고, 카드가 페이지 경계에서 잘리지 않게 붙여 둔다. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html, body {
+    background: #fff;
+    font-size: 12px;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .print-page {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* 카드 한 장은 되도록 한 페이지 안에 둔다 */
+  .print-block,
+  .print-page .panel {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none;
+  }
+
+  /* 인쇄 중에는 애니메이션이 중간 상태로 굳어 그림이 잘린다 */
+  .print-page * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
