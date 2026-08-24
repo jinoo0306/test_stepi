@@ -46,3 +46,20 @@ next-env.d.ts
 
 # 에이전트 세션 상태
 .omc/
+
+# 지원자 데이터 — 원격이 PUBLIC 저장소라 한 번 올라가면 되돌리기 어렵다.
+# 리포 루트 .gitignore 가 *.xlsx / *.pkl 을 잡아 주지만 csv·zip·json 은 안 걸린다.
+*.xlsx
+*.xls
+*.csv
+*.zip
+*.pkl
+attachments/
+지원자데이터/
+samples/
+
+# 위 *.png 류 전역 규칙에 걸리지 않도록, 화면 자산은 예외로 둔다
+!public/**
+
+# 로컬 설정 예시는 남긴다 (필요한 env 키를 아무도 모르게 되는 것을 막는다)
+!.env.example
