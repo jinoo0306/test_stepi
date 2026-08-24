@@ -3,10 +3,9 @@
  *
  * ── 이름: 확정 (박사님 미팅 자료).
  *
- * ── 점수: **목업이다.** 백엔드에 이 유형들을 채점하는 코드가 없다.
- *    services/hreval/backend_handoff/code/score_axes.py:27 의 AXES 는 5축뿐이고
- *    (전문성·책임감·상호협력·도전성·혁신성), 인재상 유형용 anchor 문장도 존재하지 않는다.
- *    화면 배치 확인용 고정값이며, 백엔드가 생기면 이 배열을 API 응답으로 교체한다.
+ * ── 점수는 여기 없다. lib/talent-evaluation.ts 가 문항별 판정(O/X/N)에서 계산한다.
+ *    점수를 이 배열에도 들고 있으면 판정 결과와 어긋날 수 있고, 그 순간
+ *    "점수에는 근거가 있다"는 전제가 무너진다. 이름과 번호만 둔다.
  *
  * ── 미해결 사항 (박사님 확인 필요):
  *    1. 「분석력」이 15번과 31번에 중복이어서 31번을 삭제하고,
@@ -28,45 +27,43 @@
 export type TalentType = {
   no: number;
   name: string;
-  /** 0-10. 목업 값 — 위 주석 참고 */
-  score: number;
 };
 
 export const TALENT_TYPES: TalentType[] = [
-  { no: 1, name: "전문성", score: 8.4 },
-  { no: 2, name: "융합력", score: 6.1 },
-  { no: 3, name: "협업력", score: 7.8 },
-  { no: 4, name: "도전성", score: 7.2 },
-  { no: 5, name: "혁신성", score: 6.9 },
-  { no: 6, name: "신뢰성", score: 8.0 },
-  { no: 7, name: "책임감", score: 8.7 },
-  { no: 8, name: "공정성", score: 7.4 },
-  { no: 9, name: "투명성", score: 7.1 },
-  { no: 10, name: "공익성", score: 6.6 },
-  { no: 11, name: "헌신성", score: 7.0 },
-  { no: 12, name: "소통력", score: 8.2 },
-  { no: 13, name: "글로벌역량", score: 5.4 },
-  { no: 14, name: "리더십", score: 6.8 },
-  { no: 15, name: "분석력", score: 9.1 },
-  { no: 16, name: "정책기획력", score: 6.3 },
-  { no: 17, name: "창의성", score: 7.6 },
-  { no: 18, name: "연구력", score: 9.3 },
-  { no: 19, name: "AI활용력", score: 5.8 },
-  { no: 20, name: "디지털역량", score: 6.2 },
-  { no: 21, name: "실무전문성", score: 8.1 },
-  { no: 22, name: "근면성", score: 7.9 },
-  { no: 23, name: "성실성", score: 8.3 },
-  { no: 24, name: "협력", score: 7.7 },
-  { no: 25, name: "팀워크", score: 7.5 },
-  { no: 26, name: "고객지향성", score: 5.2 },
-  { no: 27, name: "위기대응력", score: 6.5 },
-  { no: 28, name: "비전제시력", score: 6.0 },
-  { no: 29, name: "미래지향성", score: 7.3 },
-  { no: 30, name: "수리력", score: 8.6 },
-  { no: 31, name: "다양성", score: 6.4 },
-  { no: 32, name: "포용성", score: 6.7 },
-  { no: 33, name: "성장지향성", score: 7.8 },
-  { no: 34, name: "자기계발력", score: 8.5 },
+  { no: 1, name: "전문성" },
+  { no: 2, name: "융합력" },
+  { no: 3, name: "협업력" },
+  { no: 4, name: "도전성" },
+  { no: 5, name: "혁신성" },
+  { no: 6, name: "신뢰성" },
+  { no: 7, name: "책임감" },
+  { no: 8, name: "공정성" },
+  { no: 9, name: "투명성" },
+  { no: 10, name: "공익성" },
+  { no: 11, name: "헌신성" },
+  { no: 12, name: "소통력" },
+  { no: 13, name: "글로벌역량" },
+  { no: 14, name: "리더십" },
+  { no: 15, name: "분석력" },
+  { no: 16, name: "정책기획력" },
+  { no: 17, name: "창의성" },
+  { no: 18, name: "연구력" },
+  { no: 19, name: "AI활용력" },
+  { no: 20, name: "디지털역량" },
+  { no: 21, name: "실무전문성" },
+  { no: 22, name: "근면성" },
+  { no: 23, name: "성실성" },
+  { no: 24, name: "협력" },
+  { no: 25, name: "팀워크" },
+  { no: 26, name: "고객지향성" },
+  { no: 27, name: "위기대응력" },
+  { no: 28, name: "비전제시력" },
+  { no: 29, name: "미래지향성" },
+  { no: 30, name: "수리력" },
+  { no: 31, name: "다양성" },
+  { no: 32, name: "포용성" },
+  { no: 33, name: "성장지향성" },
+  { no: 34, name: "자기계발력" },
 ];
 
 /**

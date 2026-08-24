@@ -425,13 +425,10 @@ export default async function ApplicantDetailPage({
             </Card>
           }
           talentContent={
-            <Card
-              title="인재상 유형 도달도"
-              desc="34개 인재상 유형에 대한 지원자의 도달 정도입니다. 아직 백엔드가 연결되지 않아 점수는 화면 확인용 예시값입니다."
-              className="mt-6"
-            >
-              <TalentTypesSection jobId={id} />
-            </Card>
+            // 자기소개서 탭처럼 카드를 나란히 쌓는다. 카드는 TalentTypesSection 안에 있다
+            <div className="mt-6">
+              <TalentTypesSection jobId={id} applicantId={decodedAppId} />
+            </div>
           }
         />
       </div>
