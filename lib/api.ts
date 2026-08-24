@@ -255,11 +255,12 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  // 공고별 선정 인재상 세트 (lib/talent-selection.ts 가 쓴다)
+  // 공고별 선정 인재상 세트 (lib/talent-selection.ts 가 쓴다).
+  // id 를 인코딩하지 않으면 "../" 가 든 값이 전송 전에 정규화돼 다른 엔드포인트를 때린다.
   getTalentSelection: (id: string) =>
-    http<TalentSelectionResponse>(`/analysis-jobs/${id}/talent-selection`),
+    http<TalentSelectionResponse>(`/analysis-jobs/${encodeURIComponent(id)}/talent-selection`),
   putTalentSelection: (id: string, sets: TalentSetPayload[]) =>
-    http<TalentSelectionResponse>(`/analysis-jobs/${id}/talent-selection`, {
+    http<TalentSelectionResponse>(`/analysis-jobs/${encodeURIComponent(id)}/talent-selection`, {
       method: "PUT",
       body: JSON.stringify({ sets }),
     }),
