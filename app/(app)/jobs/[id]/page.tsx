@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowUpRight, Download, FileText, LayoutDashboard } from "lucide-react";
 import { api } from "@/lib/api";
 import ApplicantDeleteButton from "@/components/applicant-delete-button";
+import ApplicantPdfButton from "@/components/applicant-pdf-button";
+import BulkPdfButton from "@/components/bulk-pdf-button";
 import JobStatusBadge from "@/components/job-status-badge";
 import PageHeader from "@/components/page-header";
 import JobAutoRefresh from "./auto-refresh";
@@ -146,8 +148,9 @@ export default async function JobDetailPage({
                 <Download size={13} /> CSV
               </a>
               <a href={api.reportPdfUrl(id)} className="btn-ghost inline-flex items-center gap-2" target="_blank" rel="noreferrer">
-                <FileText size={13} /> PDF
+                <FileText size={13} /> 전체 PDF
               </a>
+              <BulkPdfButton jobId={id} />
             </div>
           </div>
 
@@ -207,6 +210,7 @@ export default async function JobDetailPage({
                     )}
                   </div>
                   <div className="col-span-1 flex items-center justify-end gap-1">
+                    <ApplicantPdfButton jobId={id} applicantId={a.applicant_id} />
                     <ApplicantDeleteButton jobId={id} applicantId={a.applicant_id} />
                     <ArrowUpRight
                       size={14}
