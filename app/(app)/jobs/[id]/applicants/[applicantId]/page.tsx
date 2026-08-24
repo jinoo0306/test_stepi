@@ -459,7 +459,7 @@ function Card({
             <h2 className="text-[18px] font-bold tracking-[-0.012em] text-[var(--ink)]">{title}</h2>
           </div>
           {desc && (
-            <p className="mt-1.5 pl-[14px] text-[13px] text-[var(--ink-muted)] leading-[1.6] max-w-[52ch]">
+            <p className="mt-1.5 text-[14px] text-[var(--ink-muted)] leading-[1.6] break-keep">
               {desc}
             </p>
           )}
