@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { TALENT_TYPES } from "@/lib/talent-types";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import {
   saveTalentSets,
   newTalentSetId,
@@ -66,11 +67,10 @@ export default function TalentSelectModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // 열릴 때 팝업 안으로 초점을 옮긴다.
-  // 안 하면 초점이 사이드바 버튼에 남아, Tab 이 팝업이 아니라 뒤쪽 페이지를 훑는다.
-  useEffect(() => {
-    dialogRef.current?.focus();
-  }, []);
+  // 초점을 팝업 안에 가둔다.
+  // 안 하면 마지막 요소에서 Tab 을 누를 때 초점이 뒤쪽 페이지로 빠져나가는데,
+  // 그 요소들은 오버레이에 가려 보이지 않아 어디에 있는지 알 수 없게 된다.
+  useFocusTrap(dialogRef);
 
   // 팝업이 떠 있는 동안 뒤쪽 페이지 스크롤을 잠근다.
   // 원래 값을 기억했다가 되돌린다 - 빈 문자열로 덮으면 다른 곳의 설정을 지울 수 있다.
@@ -169,8 +169,7 @@ export default function TalentSelectModal({
             </div>
             <p className="mt-1.5 text-[12.5px] leading-[1.6] text-[var(--ink-muted)]">
               세트마다 {MIN_TALENT_SELECTION}개에서 {MAX_TALENT_SELECTION}개까지 고릅니다. 이
-              공고에만 적용되며, 이 브라우저에만 저장됩니다. 다른 PC나 시크릿 창에는 반영되지
-              않습니다.
+              공고에만 적용되며, 저장하면 다른 PC와 다른 담당자에게도 같은 값이 보입니다.
             </p>
           </div>
           <button
