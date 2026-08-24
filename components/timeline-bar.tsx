@@ -34,9 +34,12 @@ type Segment = {
  * "2017.03.02" / "2017-03-02" / "2017.03" / "2017" 를 epoch ms 로.
  * 파싱 실패는 null — 호출부에서 해당 항목을 건너뛴다.
  */
-function parseDate(s?: string): number | null {
-  if (!s) return null;
-  const m = s.match(/^(\d{4})[.\-/]?(\d{1,2})?[.\-/]?(\d{1,2})?/);
+function parseDate(s?: unknown): number | null {
+  // education·career 는 백엔드에서 dict[str, Any] 로 검증 없이 내려온다.
+  // xlsx 에서 날짜가 시리얼 숫자(43570)로 들어오면 truthy 라 통과한 뒤
+  // s.match 에서 터지고, 서버 컴포넌트라 페이지 전체가 오류 화면이 된다.
+  if (typeof s !== "string" || !s) return null;
+  const m = s.match(/^(\d{4})[.\-/년]?\s*(\d{1,2})?[.\-/월]?\s*(\d{1,2})?/);
   if (!m) return null;
   const y = Number(m[1]);
   if (y < 1900 || y > 2200) return null;
@@ -49,7 +52,10 @@ function parseDate(s?: string): number | null {
   const day = m[3] ? Number(m[3]) : 1;
   if (day < 1 || day > 31) return null;
 
-  return new Date(y, month - 1, day).getTime();
+  const t = new Date(y, month - 1, day);
+  // 2019.02.31 같은 날짜는 3월로 굴러간다. 월이 바뀌었으면 잘못된 입력이다
+  if (t.getMonth() !== month - 1) return null;
+  return t.getTime();
 }
 
 /** 화면에 쓸 기간 문자열 — 연.월 까지만 */
@@ -131,15 +137,89 @@ const MIN_WIDTH = 2.2;
  *
  * segs 는 호출 전에 시작일 순으로 정렬돼 있어야 한다 (toSegments 에서 정렬함).
  * 그래야 첫 빈 레인에 넣는 greedy 가 최소 레인 수를 보장한다.
+ *
+ * 그래서 이 함수는 **화면 값이 아니라 실제 시각(ms)** 을 받는다. 퍼센트를 받으면
+ * 누군가 pos() 에 클램프나 최소 폭을 넣는 순간 같은 버그가 세 번째로 재발하는데,
+ * 인자 자체가 사실이면 그 통로가 막힌다.
  */
-function assignLanes(boxes: { left: number; trueWidth: number }[]): number[] {
-  const laneRight: number[] = []; // 레인별 현재 오른쪽 끝(%)
-  return boxes.map(({ left, trueWidth }) => {
-    let lane = laneRight.findIndex((right) => right <= left);
-    if (lane === -1) lane = laneRight.length;
-    laneRight[lane] = left + trueWidth;
+function assignLanes(segs: Segment[], axisEnd: number): number[] {
+  const laneEnd: number[] = []; // 레인별 마지막 종료 시각(ms)
+  return segs.map((s) => {
+    // 종료일 미기재(재직중·휴학)는 축 끝까지. 역전 입력은 시작 시점의 점으로 본다.
+    const end = Math.max(s.end ?? axisEnd, s.start);
+    let lane = laneEnd.findIndex((e) => e <= s.start);
+    if (lane === -1) lane = laneEnd.length;
+    // 역전 입력이 레인 끝을 뒤로 물리면, 뒤 항목이 빈 레인으로 오판돼 겹쳐 그려진다
+    laneEnd[lane] = Math.max(laneEnd[lane] ?? -Infinity, end);
     return lane;
   });
+}
+
+/**
+ * 개발 모드 자기점검 — 레인 배정이 사실과 어긋나면 알린다.
+ *
+ * 이 로직은 같은 종류의 버그가 두 번 재발했다. 두 번 다 화면용으로 만든 값이
+ * 「누가 겹치는가」라는 사실 판단에 흘러든 것이 원인이었다.
+ * 주석은 세 번째를 막지 못하므로, **원본 ms 기준으로** 실제로 검사한다.
+ * 서버 컴포넌트라 경고는 dev 서버 터미널에 뜬다.
+ */
+function warnIfLanesWrong(
+  track: string,
+  segs: Segment[],
+  lanes: number[],
+  axisEnd: number,
+): void {
+  if (process.env.NODE_ENV === "production" || segs.length === 0) return;
+
+  const endOf = (s: Segment) => Math.max(s.end ?? axisEnd, s.start);
+  const warn = (msg: string) =>
+    console.warn(
+      `[TimelineBar] ${track}: ${msg}`,
+      segs.map((s, i) => ({ label: s.label, lane: lanes[i] })),
+    );
+
+  for (let i = 1; i < segs.length; i += 1) {
+    if (segs[i].start < segs[i - 1].start) {
+      warn("시작일 순으로 정렬돼 있지 않다 (greedy 최소 레인 전제가 깨진다)");
+      break;
+    }
+  }
+
+  // 같은 레인 안에서는 어떤 두 항목도 겹치면 안 된다
+  for (let i = 0; i < segs.length; i += 1) {
+    for (let j = i + 1; j < segs.length; j += 1) {
+      if (lanes[i] !== lanes[j]) continue;
+      if (segs[i].start < endOf(segs[j]) && segs[j].start < endOf(segs[i])) {
+        warn(`같은 레인에 겹치는 항목이 있다 (${segs[i].label} ↔ ${segs[j].label})`);
+        return;
+      }
+    }
+  }
+
+  // 최소성 — 구간 그래프에서 최소 레인 수 = 최대 동시 겹침 깊이
+  const events = segs.flatMap((s) => [
+    { t: s.start, k: 1 },
+    { t: endOf(s), k: -1 },
+  ]);
+  // 끝점이 맞닿는 것(졸업일 = 입학일)은 겹침이 아니므로 같은 시각에선 -1 을 먼저 본다
+  events.sort((a, b) => a.t - b.t || a.k - b.k);
+  let cur = 0;
+  let deep = 0;
+  for (const e of events) {
+    cur += e.k;
+    deep = Math.max(deep, cur);
+  }
+  const used = lanes.reduce((n, l) => Math.max(n, l + 1), 0);
+  const depth = Math.max(1, deep);
+  if (used !== depth) warn(`레인 ${used}겹 ≠ 동시 진행 ${depth}건`);
+
+  const broken = segs.filter((s) => s.end !== null && s.end < s.start);
+  if (broken.length > 0) {
+    console.warn(
+      `[TimelineBar] ${track}: 종료일이 시작일보다 빠른 항목`,
+      broken.map((s) => s.label),
+    );
+  }
 }
 
 /**
@@ -154,7 +234,9 @@ function renderWidths(
   return boxes.map(({ left, trueWidth }, i) => {
     const next = boxes.findIndex((_, j) => j > i && lanes[j] === lanes[i]);
     const room = next === -1 ? Infinity : boxes[next].left - left;
-    return Math.max(trueWidth, Math.min(MIN_WIDTH, room));
+    // 바로 옆에 다음 막대가 붙어 있으면 room 이 0 이라 폭도 0 이 된다.
+    // 그러면 기간이 이상한 항목일수록 화면에서 사라져 확인할 길이 없어진다.
+    return Math.max(trueWidth, Math.min(MIN_WIDTH, room), 0.4);
   });
 }
 
@@ -191,13 +273,16 @@ export default function TimelineBar({
    * 클라이언트로 넘길 형태로 변환 — 여기서 위치·폭·기간 문자열을 전부 확정한다.
    * 클라이언트는 날짜를 모르고, 넘겨받은 %와 문자열만 그린다.
    */
-  const toBarSegs = (segs: Segment[], colors: string[]): BarSeg[] => {
+  const toBarSegs = (segs: Segment[], colors: string[], track: string): BarSeg[] => {
+    // 겹침 판정은 실제 날짜로만 한다. 화면 좌표는 그 뒤에 계산한다.
+    const lanes = assignLanes(segs, max);
+    warnIfLanesWrong(track, segs, lanes, max);
+
     const boxes = segs.map((s) => {
       const left = pos(s.start);
-      return { left, trueWidth: pos(s.end ?? max) - left };
+      // 역전 입력이면 폭이 음수가 되어 막대가 사라진다. 최소 폭 계산에 맡긴다
+      return { left, trueWidth: Math.max(pos(Math.max(s.end ?? max, s.start)) - left, 0) };
     });
-    // 겹치는 항목을 아래 줄로 내린다 — 위치가 다 정해진 뒤라야 판단할 수 있다.
-    const lanes = assignLanes(boxes);
     const widths = renderWidths(boxes, lanes);
 
     return segs.map((s, i) => {
@@ -272,8 +357,8 @@ export default function TimelineBar({
 
         {/* 세그먼트 레이어 + 커서 추적 tooltip (클라이언트) */}
         <TimelineTrack
-          career={toBarSegs(car, CAR_COLORS)}
-          education={toBarSegs(edu, EDU_COLORS)}
+          career={toBarSegs(car, CAR_COLORS, "경력")}
+          education={toBarSegs(edu, EDU_COLORS, "학력")}
         />
       </div>
 

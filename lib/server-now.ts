@@ -12,5 +12,9 @@
  * 클라이언트 컴포넌트(`"use client"`)에서는 쓰지 말 것 — 그 경우엔 useEffect 로 읽어야 한다.
  */
 export function serverNow(): number {
+  // 함수로 감싼 탓에 eslint 가 더는 잡아주지 못한다. 규약을 실행 시점에 지킨다
+  if (typeof window !== "undefined") {
+    throw new Error("serverNow() 는 서버 컴포넌트 전용입니다. 클라이언트에서는 useEffect 로 읽으세요.");
+  }
   return Date.now();
 }
