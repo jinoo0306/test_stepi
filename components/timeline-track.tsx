@@ -63,6 +63,18 @@ export default function TimelineTrack({
       setHover({ key, seg, x: e.clientX - r.left, w: r.width });
     };
 
+  // 키보드로 막대에 초점이 가면 같은 툴팁을 연다. 커서 위치가 없으므로 막대 가운데를 쓴다
+  const onFocus =
+    (key: string, seg: BarSeg) => (e: React.FocusEvent<HTMLDivElement>) => {
+      const root = e.currentTarget.closest("[data-timeline-root]");
+      if (!root) return;
+      const r = root.getBoundingClientRect();
+      const b = e.currentTarget.getBoundingClientRect();
+      setHover({ key, seg, x: b.left + b.width / 2 - r.left, w: r.width });
+    };
+
+  const onBlur = () => setHover(null);
+
   // recharts 의 viewBox clamp 에 해당 — 양끝에서 tooltip 이 잘리지 않게 안쪽으로 민다
   const half = TOOLTIP_MAX / 2;
   const x = hover ? Math.min(Math.max(hover.x, half), Math.max(hover.w - half, half)) : 0;
@@ -74,12 +86,12 @@ export default function TimelineTrack({
       onMouseLeave={() => setHover(null)}
     >
       {career.length > 0 && (
-        <Row segs={career} track="c" onMove={onMove} activeKey={hover?.key} />
+        <Row segs={career} track="c" onMove={onMove} onFocus={onFocus} onBlur={onBlur} activeKey={hover?.key} />
       )}
       {/* 학력도 경력과 같게 방어한다 — 없으면 22px 빈 줄만 남아
           "데이터가 있는데 안 나오나?" 로 읽힌다 */}
       {education.length > 0 && (
-        <Row segs={education} track="e" onMove={onMove} activeKey={hover?.key} />
+        <Row segs={education} track="e" onMove={onMove} onFocus={onFocus} onBlur={onBlur} activeKey={hover?.key} />
       )}
 
       {/* tooltip — top/left 고정, transform 만 움직인다 */}
@@ -120,6 +132,8 @@ function Row({
   segs,
   track,
   onMove,
+  onFocus,
+  onBlur,
   activeKey,
 }: {
   segs: BarSeg[];
@@ -128,6 +142,11 @@ function Row({
     key: string,
     seg: BarSeg,
   ) => (e: React.MouseEvent<HTMLDivElement>) => void;
+  onFocus: (
+    key: string,
+    seg: BarSeg,
+  ) => (e: React.FocusEvent<HTMLDivElement>) => void;
+  onBlur: () => void;
   activeKey?: string;
 }) {
   // 트랙 높이는 실제로 쓰인 레인 수만큼 늘어난다. 겹침이 없으면 예전과 똑같은 22px.
@@ -143,10 +162,18 @@ function Row({
           <div
             key={key}
             onMouseMove={onMove(key, s)}
+            // 마우스만 지원하면 키보드·터치 사용자는 기간과 소속을 볼 방법이 없다.
+            // 막대 자체에 이름을 붙여 스크린리더에도 빈 영역으로 들리지 않게 한다.
+            tabIndex={0}
+            role="img"
+            aria-label={`${s.label} ${s.period}${s.detail ? ` ${s.detail}` : ""}`}
+            onFocus={onFocus(key, s)}
+            onBlur={onBlur}
             // 5개월짜리 경력은 폭이 얇아 잡기 어렵다 — 보이지 않는 hover 영역을 넓힌다.
             // 세로 여백은 레인 사이 간격(pad)을 넘지 않아야 아래 레인의 클릭을 안 뺏는다.
-            className={`absolute
+            className={`absolute outline-none
                         before:absolute before:-inset-x-[5px] before:-inset-y-[3px] before:content-['']
+                        focus-visible:ring-2 focus-visible:ring-[var(--secondary)] focus-visible:ring-offset-1
                         ${isActive ? "z-30" : ""}`}
             style={{
               left: `${s.left}%`,
