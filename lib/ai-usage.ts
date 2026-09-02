@@ -1,88 +1,96 @@
 /**
- * AI 사용 의심도 — 표시용 데이터.
+ * AI 사용 의심도 — 만들 지표 목록.
  *
- * ── **전부 목업이다.** 백엔드에 이 값을 산출하는 코드가 없다.
- *    lib/api.ts 의 scores 타입에 관련 필드가 없어 받아올 값 자체가 없다.
- *    지원자가 바뀌어도 같은 숫자가 나오며, 화면 배치·문구 확정용이다.
+ * 지금은 **이름표만 있다.** 점수·횟수·근거 문장은 하나도 넣지 않았다.
+ * 지표가 하나뿐인 상태에서 화면에 숫자를 채우면 다 된 것처럼 보이고,
+ * 그 화면에 맞춰 로직을 억지로 끼우게 된다. 지표가 나온 뒤에 표시를 정한다.
  *
- * ── 백엔드가 생기면 이 파일의 상수를 API 응답으로 교체한다.
- *    화면 구조(종합 점수 1개 + 문항별 분해 + 설명 가능한 보조 지표)는
- *    어떤 탐지 방식을 쓰더라도 그대로 쓸 수 있게 잡았다.
- *
- * ── 탐지 방식 (2026-08-19 기준 미확정, 박사님 판단 필요):
- *    ① perplexity 단독      — 싸지만 격식 한국어에서 오탐이 많다
- *    ② 2모델 대조(Binoculars) — cross-perplexity 로 "원래 뻔한 글" 성분을 상쇄. 학습 불필요.
- *                              Qwen3-4B + 14B 로 구현 가능 (생성이 아니라 forward pass)
- *    ③ 문체 지표            — 단독으로는 약하나 *사람이 읽을 근거*를 만드는 유일한 축
- *    권장은 ②가 점수를, ③이 근거를 맡는 병행 구조.
- *    직무 적합도가 LLM 점수 + 코사인 근거 문장을 나란히 보여주는 것과 같은 형태다.
- *
- * ⚠️ 문장 단위 발췌("이 문장이 AI 같습니다")는 **일부러 목업으로 넣지 않았다.**
- *    나머지 목업은 배치 확인용인 게 보이지만, 가짜 근거 문장은 진짜처럼 읽혀
- *    실제 채용 판단에 영향을 줄 수 있다. 백엔드가 붙을 때 채운다.
+ * 종합 점수는 두 축의 평균이다. 축 하나는 지표 여러 개를 합친 값이다.
+ * 지표 이름은 백엔드 필드명·논문과 같은 말을 쓴다. 화면에서 쉬운 말로 바꾸면
+ * 나중에 「이 점수 왜 이래요」를 추적할 때 무엇을 가리키는 말인지 알 수 없게 된다.
  */
 
-export type AiUsageMetric = {
-  /** 지표 이름 — 면접관이 읽는 말 */
+export type AiUsageItemStatus =
+  /** 구현하고 실측으로 채택했다 */
+  | "done"
+  /** 만들 것이다 */
+  | "planned"
+  /** 만들었지만 실측에서 떨어졌다 */
+  | "dropped";
+
+export type AiUsageItem = {
   label: string;
-  /** 0-100. 높을수록 AI 문체에 가깝다 */
-  score: number;
-  /** 이 지표가 무엇을 보는지 한 줄 설명 */
-  hint: string;
+  status: AiUsageItemStatus;
+  /** 무엇을 보는 지표인지, 또는 왜 떨어졌는지 한 줄 */
+  note: string;
 };
 
-export type AiUsageQuestion = {
-  /** 자기소개서 문항 번호 */
-  no: number;
-  title: string;
-  /** 0-100 */
-  score: number;
+export type AiUsageAxis = {
+  label: string;
+  note: string;
+  items: AiUsageItem[];
 };
 
-export type AiUsage = {
-  /** 0-100. 헤더 통계줄에도 같은 값이 나간다 */
-  overall: number;
-  /** 문항별 분해 — 어느 문항이 점수를 끌어올렸는지 */
-  questions: AiUsageQuestion[];
-  /** 사람이 읽을 수 있는 보조 지표 */
-  metrics: AiUsageMetric[];
-};
-
-export const AI_USAGE_MOCK: AiUsage = {
-  overall: 80,
-  questions: [
-    { no: 1, title: "지원 동기", score: 62 },
-    { no: 2, title: "직무 역량", score: 91 },
-    { no: 3, title: "성장 과정", score: 44 },
-    { no: 4, title: "입사 후 포부", score: 78 },
+export const AI_USAGE_PLAN: {
+  formula: string;
+  axes: AiUsageAxis[];
+  caveat: string;
+} = {
+  formula: "종합 점수 = (문체 축 + 모델 축) ÷ 2",
+  axes: [
+    {
+      label: "문체 축",
+      note: "한국어 어문규범상 부자연스러운 자리를 셉니다. 지표 여러 개를 합쳐 한 점수로 만듭니다.",
+      items: [
+        {
+          label: "연결어미 뒤 쉼표",
+          status: "done",
+          note: "「~하고,」처럼 연결어미 뒤에 쉼표를 찍는 자리. 생성 모델이 영어 구두법을 옮겨 옵니다.",
+        },
+        {
+          label: "품사 n-gram 다양성",
+          status: "planned",
+          note: "품사 배열이 얼마나 되풀이되는지. 형태소 분석기가 필요합니다.",
+        },
+        {
+          label: "어휘 다양성 (MTLD)",
+          status: "planned",
+          note: "쓰인 낱말의 폭. 글 길이에 휘둘리지 않는 방식으로 잽니다.",
+        },
+        {
+          label: "열거 표지 유형 분포",
+          status: "planned",
+          note: "「첫째」 「먼저」 같은 나열 표지를 어떤 유형으로 쓰는지.",
+        },
+        {
+          label: "문항 간 문체 흔들림",
+          status: "planned",
+          note: "네 문항의 문체가 서로 얼마나 다른지. 사람은 흔들리고 생성 모델은 고릅니다.",
+        },
+        {
+          label: "띄어쓰기 일관성",
+          status: "dropped",
+          note: "실측에서 연도와 무관하게 흔들려 눈금에 넣지 않기로 했습니다.",
+        },
+      ],
+    },
+    {
+      label: "모델 축",
+      note: "언어 모델이 이 글을 얼마나 자기가 쓸 법한 글로 보는지 잽니다.",
+      items: [
+        {
+          label: "Fast-DetectGPT",
+          status: "planned",
+          note: "채점에는 Qwen3-4B를 씁니다. 앵커를 만든 모델과 일부러 다른 것을 씁니다.",
+        },
+      ],
+    },
   ],
-  metrics: [
-    {
-      label: "문장 길이 고름",
-      score: 88,
-      hint: "사람이 쓴 글은 길이가 들쭉날쭉하다. 고르면 AI 쪽이다",
-    },
-    {
-      label: "상투 표현 빈도",
-      score: 74,
-      hint: "「~를 통해 성장」처럼 어느 자소서에나 있는 표현",
-    },
-    {
-      label: "구체 사례 밀도",
-      score: 81,
-      hint: "숫자·기관명·기간이 적을수록 AI 쪽이다 (역방향 지표)",
-    },
-    {
-      label: "어휘 다양성",
-      score: 69,
-      hint: "쓰인 낱말의 폭. 좁을수록 AI 쪽이다 (역방향 지표)",
-    },
-  ],
+  caveat:
+    "완성돼도 확정 판정이 아닙니다. 면접에서 내용을 직접 물어보는 데 쓰는 참고자료입니다.",
 };
 
-/** 점수대별 표현 — 「확정 판정 아님」이 문구에서 드러나야 한다 */
-export function aiUsageLevel(score: number): { text: string; tone: "high" | "mid" | "low" } {
-  if (score >= 75) return { text: "AI 문체와 많이 닮음", tone: "high" };
-  if (score >= 45) return { text: "일부 구간이 닮음", tone: "mid" };
-  return { text: "AI 문체와 크게 다름", tone: "low" };
+/** 헤더 통계줄 한 칸. 값이 없으므로 자리만 지킨다 */
+export function aiUsageHeadline(): { value: string; unit: string; sub: string } {
+  return { value: "–", unit: "", sub: "준비 중" };
 }

@@ -31,8 +31,8 @@ export type BarSeg = {
 };
 
 /** 레인 한 겹의 높이(px)와 그 안에 놓이는 막대 높이 — 겹침이 잦으면 여기만 줄이면 된다 */
-const LANE_H = 22;
-const BAR_H = 16;
+const LANE_H = 28;
+const BAR_H = 20;
 
 type Hover = {
   key: string;
@@ -193,7 +193,7 @@ function Row({
             >
               {/* 막대 본체 — 커서가 올라간 동안 떠오른 채 유지 */}
               <div
-                className={`h-full w-full rounded-[3px] transition-[transform,box-shadow] duration-150 ease-out
+                className={`h-full w-full rounded-[6px] transition-[transform,box-shadow] duration-150 ease-out
                             ${
                               isActive
                                 ? "-translate-y-[2px] scale-y-[1.18] shadow-[0_2px_8px_rgba(27,26,64,0.28)]"

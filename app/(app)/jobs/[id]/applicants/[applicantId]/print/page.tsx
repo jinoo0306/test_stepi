@@ -9,18 +9,21 @@ import DeptFitList from "@/components/dept-fit-list";
 import PrintAuto from "@/components/print-auto";
 import PrintButton from "@/components/print-button";
 import AiUsageSection from "@/components/ai-usage-section";
+import { MockBadge } from "@/components/mock-mark";
 import TalentTypesSection from "@/components/talent-types-section";
-import { AI_USAGE_MOCK } from "@/lib/ai-usage";
+import { aiUsageHeadline } from "@/lib/ai-usage";
 import { cleanReason } from "@/lib/clean-reason";
 
 export const dynamic = "force-dynamic";
+
+const aiUsageHead = aiUsageHeadline();
 
 /**
  * 지원자 1명 인쇄(PDF) 화면.
  *
  * 지원자 상세 대시보드와 같은 카드·색·차트를 그대로 쓰되, 탭을 없애 한 장으로 펼치고
  * 버튼류(피드백·재계산·업로드)를 뺐다. 브라우저 인쇄로 저장하므로 화면과 결과가 같다.
- * 값이 아직 목업인 AI 사용 의심도와 인재상 유형은 문서로 배포될 때 오해를 부를 수 있어 뺐다.
+ * 아직 목업인 AI 사용 의심도와 인재상 유형도 함께 싣되, 화면과 같은 미개발 배지를 붙인다.
  */
 export default async function ApplicantPrintPage({
   params,
@@ -135,9 +138,9 @@ export default async function ApplicantPrintPage({
             <HeaderStat label="직무적합 평균" value={fitAvg100.toFixed(0)} unit="/ 100" accent />
             <HeaderStat
               label="AI 사용 의심도"
-              value={String(AI_USAGE_MOCK.overall)}
-              unit="%"
-              sub="예시"
+              value={aiUsageHead.value}
+              unit={aiUsageHead.unit}
+              sub={aiUsageHead.sub}
             />
             <HeaderStat label="상위 부서" value={topDeptV2?.dept_name ?? "—"} sub={deptSub} text />
             <HeaderStat
@@ -235,7 +238,8 @@ export default async function ApplicantPrintPage({
         {/* AI 사용 의심도 근거 — 대시보드와 같은 자리(자기소개서 핵심 바로 위) */}
         <Card
           title="AI 사용 의심도 근거"
-          desc="자기소개서 문체가 AI가 쓴 글과 얼마나 닮았는지입니다."
+          badge={<MockBadge />}
+          desc="자기소개서 문체와 문장 흐름을 보고 AI가 썼는지 가늠합니다. 만들 지표 목록입니다."
         >
           <AiUsageSection />
         </Card>
@@ -350,10 +354,13 @@ export default async function ApplicantPrintPage({
 /** 상세 화면의 Card 와 같은 모양. 인쇄에서 카드가 페이지 경계에 걸리지 않게 print-block 을 붙인다 */
 function Card({
   title,
+  badge,
   desc,
   children,
 }: {
   title: string;
+  /** 제목 옆 표식 */
+  badge?: React.ReactNode;
   desc?: string;
   children: React.ReactNode;
 }) {
@@ -361,9 +368,10 @@ function Card({
     <section className="panel print-block">
       <div className="flex items-start justify-between gap-4 pb-3.5 mb-4 border-b border-[var(--line)]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="mark" />
             <h2 className="text-[18px] font-bold tracking-[-0.012em] text-[var(--ink)]">{title}</h2>
+            {badge}
           </div>
           {desc && (
             <p className="mt-1.5 text-[14px] text-[var(--ink-muted)] leading-[1.6] break-keep">

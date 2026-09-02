@@ -12,6 +12,7 @@ import {
   TALENT_SCORE_MAX,
 } from "@/lib/talent-evaluation";
 import { useFocusTrap } from "@/lib/use-focus-trap";
+import { MockBadge } from "@/components/mock-mark";
 
 /**
  * 인재상 하나의 문항별 판정과 근거를 보여주는 오른쪽 패널.
@@ -108,7 +109,10 @@ export default function TalentEvidenceDrawer({
           <div className="shrink-0 border-b border-[var(--line)] px-5 pt-4 pb-3.5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="truncate text-[18px] font-bold text-[var(--ink)]">{axis.axis}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate text-[18px] font-bold text-[var(--ink)]">{axis.axis}</h3>
+                  <MockBadge />
+                </div>
                 <p className="mt-1 text-[13px] text-[var(--ink-muted)] tabular-nums">
                   충족 {axis.o_count} · 미충족 {axis.x_count} · 판정 불가 {axis.n_count}
                 </p>
@@ -155,7 +159,7 @@ export default function TalentEvidenceDrawer({
             )}
           </div>
 
-          {/* ── 문항 목록 ── */}
+          {/* ── 문항 목록 ── 근거 칸의 논문·회사·인용문은 전부 지어낸 값이다 */}
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
             <ul className="space-y-2.5">
               {groups.map((g) =>

@@ -5,17 +5,17 @@ import { TALENT_TYPES, SELECTED_TALENT_NOS } from "./talent-types";
 import { api, type TalentSetPayload } from "./api";
 
 /**
- * 선정 인재상 세트 — 공고(분석작업) 하나마다 따로 저장한다.
+ * 선정 인재상 세트 — 분석 하나마다 따로 저장한다.
  *
  * ── 세트가 여럿인 이유
- *    한 공고 안에서도 보는 눈이 여러 개다. 기업 공통 인재상, 이 직무 전용,
- *    부서장이 보는 항목이 서로 다르다. 그래서 5개짜리 묶음을 여러 벌 두고
- *    묶음마다 이름을 붙인다. 화면에는 묶음마다 오각형이 하나씩 나온다.
+ *    한 분석 안에서도 보는 눈이 여러 개다. 기업 공통 인재상, 이 직무 전용,
+ *    부서장이 보는 항목이 서로 다르다. 그래서 최소 3개에서 최대 5개짜리 묶음을 여러 벌 두고
+ *    묶음마다 이름을 붙인다. 화면에는 묶음마다 삼각형 ~ 오각형이 하나씩 나온다.
  *
  * ── 저장 위치 — 서버 (2026-08-19 localStorage 에서 옮김)
  *    GET/PUT /analysis-jobs/{jobId}/talent-selection
  *    → analysis_jobs.selected_talent_sets (JSON 컬럼)
- *    localStorage 시절에는 이 브라우저에서만 보였다. 공고 하나에 담당자가
+ *    localStorage 시절에는 이 브라우저에서만 보였다. 분석 하나에 담당자가
  *    여럿 붙으므로 다른 PC·시크릿 창에서도 같은 값이 보여야 한다.
  *
  * ── useSyncExternalStore 를 쓰는 이유
@@ -47,7 +47,7 @@ const VALID_NOS = new Set(TALENT_TYPES.map((t) => t.no));
 /**
  * 한 세트에서 고를 수 있는 최대 개수.
  * 선정분을 레이더(오각형)로 그리므로 5를 넘으면 꼭짓점 라벨이 겹쳐 읽기 어렵다.
- * 미팅 자료의 1안도 "2025년 인재상으로 유형 중 5가지 선택" 이다.
+ * 미팅 자료의 1안도 "인재상 유형 중 5가지 선택" 이다.
  */
 export const MAX_TALENT_SELECTION = 5;
 
@@ -68,9 +68,9 @@ export const MAX_TALENT_SETS = 6;
 /** 이름 입력 상한. 박스 머리에 한 줄로 들어가야 한다 */
 export const MAX_SET_NAME = 20;
 
-/** 아직 아무것도 고르지 않았을 때 보여줄 기본 세트 (미팅 자료의 2025년 예시) */
+/** 아직 아무것도 고르지 않았을 때 보여줄 기본 세트 (미팅 자료의 예시) */
 export const DEFAULT_TALENT_SETS: TalentSet[] = [
-  { id: "set-default", name: "2025년 인재상", nos: SELECTED_TALENT_NOS },
+  { id: "set-default", name: "2026년 인재상", nos: SELECTED_TALENT_NOS },
 ];
 
 /** 이름을 비워둔 세트에 붙일 이름 */
@@ -140,7 +140,7 @@ export type TalentSnapshot = {
 };
 
 /**
- * 공고별 캐시. getSnapshot 이 동기라서 반드시 필요하다.
+ * 분석별 캐시. getSnapshot 이 동기라서 반드시 필요하다.
  * useSyncExternalStore 는 매번 *같은 객체*가 돌아와야 무한 렌더를 피하므로
  * 값이 바뀔 때만 새 객체를 넣는다. 아래 두 상수도 그래서 모듈 수준에 둔다.
  */
@@ -148,7 +148,7 @@ const cache = new Map<string, TalentSnapshot>();
 const LOADING: TalentSnapshot = { sets: DEFAULT_TALENT_SETS, status: "loading" };
 const FAILED: TalentSnapshot = { sets: DEFAULT_TALENT_SETS, status: "error" };
 /**
- * 이미 서버에 물어본 공고.
+ * 이미 서버에 물어본 분석.
  *
  * 실패해도 여기서 빼지 않는다. getSnapshot 은 렌더마다 여러 번 불리므로,
  * 빼면 곧바로 다시 요청하고 또 실패하고를 끝없이 반복해 브라우저가 멎는다.
@@ -170,7 +170,7 @@ function loadOnce(jobId: string): void {
       notify();
     })
     .catch((e) => {
-      // 서버가 죽었거나 공고가 없다. 화면은 기본 세트로 그리되 status 를 error 로
+      // 서버가 죽었거나 분석이 없다. 화면은 기본 세트로 그리되 status 를 error 로
       // 남겨, 그 값을 저장해 서버를 덮어쓰는 일이 없게 한다.
       console.warn("[talent-selection] 불러오기 실패:", e);
       cache.set(jobId, FAILED);
@@ -191,7 +191,7 @@ function readSnapshot(jobId: string): TalentSnapshot {
   return cache.get(jobId) ?? LOADING;
 }
 
-/** 이 공고에 저장된 인재상 세트 목록과 불러오기 상태 */
+/** 이 분석에 저장된 인재상 세트 목록과 불러오기 상태 */
 export function useTalentSets(jobId: string): TalentSnapshot {
   // 첫 요청은 구독 시점에 건다. useSyncExternalStore 가 subscribe 를 effect 에서
   // 부르므로 렌더 중 부작용이 아니다. getSnapshot 안에서 걸면 렌더마다 불려 위험하다.
@@ -210,7 +210,7 @@ export function useTalentSets(jobId: string): TalentSnapshot {
 }
 
 /**
- * 이 공고의 세트를 저장한다.
+ * 이 분석의 세트를 저장한다.
  *
  * 화면을 먼저 바꾸고 서버에 보낸다. 응답을 기다렸다 바꾸면 체크박스가 굼떠 보인다.
  * 실패하면 이전 값으로 되돌리고 에러를 던져 호출한 쪽이 알 수 있게 한다.

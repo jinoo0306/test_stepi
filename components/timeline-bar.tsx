@@ -320,7 +320,7 @@ export default function TimelineBar({
       `}</style>
 
       {/* 연도 눈금 */}
-      <div className="relative h-[18px] mb-1.5">
+      <div className="relative h-[18px] mb-2.5">
         {years.map((y) => {
           const left = pos(new Date(y, 0, 1).getTime());
           if (left < 0 || left > 100) return null;
@@ -363,7 +363,7 @@ export default function TimelineBar({
       </div>
 
       {/* 범례 */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3.5">
         {car.length > 0 && (
           <Legend icon={<Briefcase size={11} />} label="경력" color={CAR_COLORS[0]} />
         )}
@@ -371,9 +371,7 @@ export default function TimelineBar({
           <Legend icon={<GraduationCap size={11} />} label="학력" color={EDU_COLORS[0]} />
         )}
         {all.some((s) => s.end === null) && (
-          <span className="text-[11px] text-[var(--ink-soft)]">
-            흐린 끝 = 종료일 미기재 (재직중·휴학)
-          </span>
+          <span className="text-[11.5px] text-[var(--ink-soft)]">흐린 끝 = 계속</span>
         )}
       </div>
     </div>

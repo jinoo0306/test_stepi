@@ -12,11 +12,12 @@ import {
 } from "@/lib/talent-evaluation";
 import RadarCard from "@/components/radar-card";
 import TalentEvidenceDrawer from "@/components/talent-evidence-drawer";
+import { MockBadge } from "@/components/mock-mark";
 
 /**
  * 인재상 유형 도달도 - 미팅 자료의 1안과 2안을 한 화면에 위아래로 쌓는다.
  *
- *   상단 = 1안 : 이번 공고에 선정된 유형만 강조. 세트마다 오각형 하나.
+ *   상단 = 1안 : 이번 분석에 선정된 유형만 강조. 세트마다 오각형 하나.
  *   하단 = 2안 : 34개 전체 점수 (기본 접힘)
  *
  * 2안이 1안의 상위집합이라 별도 화면을 만들 필요가 없다.
@@ -34,6 +35,9 @@ import TalentEvidenceDrawer from "@/components/talent-evidence-drawer";
 
 /** 접힘 상태에서 전체 목록에 보여줄 상·하위 개수 */
 const PEEK = 5;
+
+/** 점수 막대에 그을 눈금 위치(%) */
+const SCORE_TICKS = [25, 50, 75];
 
 /**
  * 레이더로 그리기 위한 최소 꼭짓점 수.
@@ -98,7 +102,7 @@ export default function TalentTypesSection({
     [evaluation],
   );
 
-  // 이 공고에 저장된 세트들. 없으면 미팅 자료의 2025년 예시가 기본값이다.
+  // 이 분석에 저장된 세트들. 없으면 미팅 자료의 예시가 기본값이다.
   // 아직 못 불러왔을 때도 기본값이 오므로, 그 둘을 status 로 구분해 알려준다.
   const { sets, status } = useTalentSets(jobId);
   // 어느 세트든 선정된 항목은 전체 목록에서 강조한다
@@ -164,15 +168,16 @@ export default function TalentTypesSection({
       <Block
         title="선정 인재상"
         count={`${sets.length}세트`}
+        badge={<MockBadge />}
         desc={
           <>
-            이번 공고에 적용된 인재상입니다. 왼쪽 메뉴의 「인재상 선택」에서 바꿉니다.{" "}
-            <b className="font-bold text-[var(--ink)]">검증 기준과 점수는 아직 예시입니다.</b>
+            이번 분석에 적용된 인재상입니다. 왼쪽 메뉴의{" "}
+            <b className="font-bold text-[var(--ink)]">인재상 선택</b>에서 변경할 수 있습니다.
           </>
         }
       >
         {/* 못 불러온 상태에서 기본 세트를 아무 말 없이 그리면, 담당자가 고른 적 없는
-            인재상을 이 공고의 선정 결과로 읽게 된다. 무엇을 보고 있는지 먼저 밝힌다. */}
+            인재상을 이 분석의 선정 결과로 읽게 된다. 무엇을 보고 있는지 먼저 밝힌다. */}
         {status !== "ready" && (
           <p
             className={`mb-4 text-[14px] leading-[1.6] ${
@@ -206,7 +211,8 @@ export default function TalentTypesSection({
       <Block
         title="전체 인재상"
         count={`${TALENT_TYPES.length}개`}
-        desc="인재상마다 사실 확인 문항 10개 중 충족한 수로 점수를 냅니다. 줄을 누르면 판정과 근거가 열립니다. 판정은 아직 예시 데이터입니다."
+        badge={<MockBadge />}
+        desc="인재상마다 사실 확인 문항 10개 중 충족한 수로 점수를 냅니다. 줄을 누르면 판정과 근거가 열립니다."
         action={
           printMode ? null : (
             <button
@@ -328,12 +334,15 @@ function SetBox({
 function Block({
   title,
   count,
+  badge,
   desc,
   action,
   children,
 }: {
   title: string;
   count: string;
+  /** 제목 옆 표식 */
+  badge?: React.ReactNode;
   // 문장 안 일부만 굵게 쓰는 곳이 있어 문자열이 아니라 노드를 받는다
   desc: React.ReactNode;
   action?: React.ReactNode;
@@ -343,7 +352,7 @@ function Block({
     <section className="panel">
       <div className="flex items-start justify-between gap-4 pb-3.5 mb-4 border-b border-[var(--line)]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="mark" />
             <h2 className="text-[18px] font-bold tracking-[-0.012em] text-[var(--ink)]">
               {title}
@@ -351,6 +360,7 @@ function Block({
                 {count}
               </span>
             </h2>
+            {badge}
           </div>
           <p className="mt-1.5 text-[14px] leading-[1.6] text-[var(--ink-muted)] break-keep">
             {desc}
@@ -432,19 +442,30 @@ function Row({
         {axis.score === null ? (
           <span className="block h-2 w-full rounded-full border border-dashed border-[var(--line-strong)]" />
         ) : (
-          <span className="block h-2 w-full rounded-full bg-[var(--bg-2)] overflow-hidden">
+          <span className="relative block h-2 w-full rounded-full bg-[var(--line)] overflow-hidden">
             <span
               className="stepi-talent-grow block h-full rounded-full"
               style={{
                 width: `${pct}%`,
                 background: highlight
                   ? "linear-gradient(90deg, var(--gold), var(--gold-2))"
-                  : "var(--line-strong)",
+                  : "var(--p-300)",
+                // 그라디언트를 막대 자기 폭이 아니라 트랙 전체 폭에 맞춘다.
+                // 안 그러면 같은 위치인데 값마다 색이 다르게 나온다
+                backgroundSize: pct > 0 ? `${(10000 / pct).toFixed(2)}% 100%` : "100% 100%",
                 transformOrigin: "left center",
                 animation: "stepi-talent-grow 0.9s cubic-bezier(0.22,0.68,0.28,1) both",
                 animationDelay: `${delay}ms`,
               }}
             />
+            {/* 눈금 — 채움 위에 얹어야 채워진 구간에서도 보인다 */}
+            {SCORE_TICKS.map((t) => (
+              <span
+                key={t}
+                className="absolute inset-y-0 w-px bg-[rgba(27,26,64,0.16)]"
+                style={{ left: `${t}%` }}
+              />
+            ))}
           </span>
         )}
       </span>

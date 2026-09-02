@@ -11,12 +11,15 @@ import DeptFitV2Section from "@/components/dept-fit-v2-section";
 import DetailTabs from "@/components/detail-tabs";
 import TalentTypesSection from "@/components/talent-types-section";
 import AiUsageSection from "@/components/ai-usage-section";
-import { AI_USAGE_MOCK } from "@/lib/ai-usage";
+import { MockBadge } from "@/components/mock-mark";
+import { aiUsageHeadline } from "@/lib/ai-usage";
 import InterviewQuestionsToggle from "@/components/interview-questions-toggle";
 import { cleanReason } from "@/lib/clean-reason";
 import ApplicantPdfButton from "@/components/applicant-pdf-button";
 
 export const dynamic = "force-dynamic";
+
+const aiUsageHead = aiUsageHeadline();
 
 export default async function ApplicantDetailPage({
   params,
@@ -123,9 +126,9 @@ export default async function ApplicantDetailPage({
             <HeaderStat label="직무적합 평균" value={fitAvg100.toFixed(0)} unit="/ 100" accent />
             <HeaderStat
               label="AI 사용 의심도"
-              value={String(AI_USAGE_MOCK.overall)}
-              unit="%"
-              sub="예시"
+              value={aiUsageHead.value}
+              unit={aiUsageHead.unit}
+              sub={aiUsageHead.sub}
             />
             <HeaderStat label="상위 부서" value={topDeptV2?.dept_name ?? "—"} sub={deptSub} text />
             <HeaderStat
@@ -287,7 +290,8 @@ export default async function ApplicantDetailPage({
                     바로 아래에서 그 문항 내용을 확인하는 동선이 이어진다. */}
                 <Card
                   title="AI 사용 의심도 근거"
-                  desc="자기소개서 문체가 AI가 쓴 글과 얼마나 닮았는지입니다."
+                  badge={<MockBadge />}
+                  desc="자기소개서 문체와 문장 흐름을 보고 AI가 썼는지 가늠합니다."
                 >
                   <AiUsageSection />
                 </Card>
@@ -443,12 +447,15 @@ export default async function ApplicantDetailPage({
 /** 카드 — 흰 surface + 액센트 바 마커 헤더 (번호 없이 섹션 구분) */
 function Card({
   title,
+  badge,
   desc,
   action,
   className,
   children,
 }: {
   title: string;
+  /** 제목 옆 표식 */
+  badge?: React.ReactNode;
   desc?: string;
   action?: React.ReactNode;
   className?: string;
@@ -458,9 +465,10 @@ function Card({
     <section className={`panel ${className ?? ""}`}>
       <div className="flex items-start justify-between gap-4 pb-3.5 mb-4 border-b border-[var(--line)]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="mark" />
             <h2 className="text-[18px] font-bold tracking-[-0.012em] text-[var(--ink)]">{title}</h2>
+            {badge}
           </div>
           {desc && (
             <p className="mt-1.5 text-[14px] text-[var(--ink-muted)] leading-[1.6] break-keep">

@@ -140,9 +140,9 @@ export default function TalentSelectModal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    // 배경 - 클릭하면 닫힌다
+    // 배경 - 클릭하면 닫힌다. 뒤 화면은 흐리게 깐다
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(27,26,64,0.45)] p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(27,26,64,0.32)] p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* 본체 - 배경 클릭이 여기까지 번지지 않게 막는다 */}
@@ -169,7 +169,7 @@ export default function TalentSelectModal({
             </div>
             <p className="mt-1.5 text-[12.5px] leading-[1.6] text-[var(--ink-muted)]">
               세트마다 {MIN_TALENT_SELECTION}개에서 {MAX_TALENT_SELECTION}개까지 고릅니다. 이
-              공고에만 적용되며, 저장하면 다른 PC와 다른 담당자에게도 같은 값이 보입니다.
+              분석에만 적용됩니다.
             </p>
           </div>
           <button

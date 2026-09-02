@@ -38,8 +38,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  // 분석작업(공고) 안에 있을 때만 인재상 메뉴를 띄운다.
-  //   /jobs/{id}...  → 공고 ID
+  // 분석작업 안에 있을 때만 인재상 메뉴를 띄운다.
+  //   /jobs/{id}...  → 분석 ID
   //   /jobs/new      → 새 분석 만들기이므로 제외
   const jobMatch = pathname.match(/^\/jobs\/([^/]+)/);
   const jobId = jobMatch && jobMatch[1] !== "new" ? jobMatch[1] : null;
@@ -223,13 +223,13 @@ export default function Sidebar() {
           })
         )}
 
-        {/* 이 공고 — 분석작업 안에서만 나타나는 상황별 메뉴.
+        {/* 이 분석 — 분석작업 안에서만 나타나는 상황별 메뉴.
             링크가 아니라 팝업을 여는 버튼이라 features/allLeaves 배열에 못 넣는다. */}
         {jobId && (
           <div className={collapsed ? "" : "mt-2 pt-4 border-t border-[var(--line)]"}>
             {!collapsed && (
               <div className="px-2.5 pb-1 text-[11.5px] font-bold uppercase tracking-[0.06em] text-[var(--ink-soft)]">
-                이 공고
+                이 분석
               </div>
             )}
             {/* 불러오기 전에는 못 열게 막는다.
@@ -270,7 +270,7 @@ export default function Sidebar() {
               )}
             </button>
             {/* 실패했을 때 새로고침 없이 다시 시도할 길.
-                loadOnce 는 한 공고에 한 번만 요청하므로 이 버튼이 유일한 출구다. */}
+                loadOnce 는 한 분석에 한 번만 요청하므로 이 버튼이 유일한 출구다. */}
             {!collapsed && talentStatus === "error" && (
               <button
                 onClick={() => retryTalentSets(jobId)}
