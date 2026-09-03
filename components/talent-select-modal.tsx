@@ -140,12 +140,9 @@ export default function TalentSelectModal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    // 배경 - 클릭하면 닫힌다. 뒤 화면은 흐리게 깐다
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(27,26,64,0.32)] p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      {/* 본체 - 배경 클릭이 여기까지 번지지 않게 막는다 */}
+    // 배경 - 뒤 화면은 흐리게 깐다. 클릭으로는 닫지 않는다 (이름 드래그가 밖에서 끝나면 닫혀버림)
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(27,26,64,0.32)] p-4 backdrop-blur-sm">
+      {/* 본체 */}
       <div
         ref={dialogRef}
         // 원래 초점을 받을 수 없는 div 에 프로그램으로만 초점을 주기 위해 -1.
@@ -155,7 +152,6 @@ export default function TalentSelectModal({
         aria-modal="true"
         aria-label="인재상 선택"
         className="w-full max-w-[720px] max-h-[85vh] flex flex-col rounded-xl bg-[var(--paper)] shadow-[0_12px_40px_rgba(27,26,64,0.28)] outline-none"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* 머리 */}
         <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-[var(--line)]">
