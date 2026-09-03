@@ -36,9 +36,6 @@ import { MockBadge } from "@/components/mock-mark";
 /** 접힘 상태에서 전체 목록에 보여줄 상·하위 개수 */
 const PEEK = 5;
 
-/** 점수 막대에 그을 눈금 위치(%) */
-const SCORE_TICKS = [25, 50, 75];
-
 /**
  * 레이더로 그리기 위한 최소 꼭짓점 수.
  * 1개는 점, 2개는 선이 되어 도형이 안 된다.
@@ -450,22 +447,14 @@ function Row({
                 background: highlight
                   ? "linear-gradient(90deg, var(--gold), var(--gold-2))"
                   : "var(--p-300)",
-                // 그라디언트를 막대 자기 폭이 아니라 트랙 전체 폭에 맞춘다.
-                // 안 그러면 같은 위치인데 값마다 색이 다르게 나온다
+                // highlight 그라디언트를 막대 자기 폭이 아니라 트랙 전체 폭에 맞춘다.
+                // 안 그러면 같은 위치인데 값마다 색이 다르게 나온다 (단색 막대엔 무의미)
                 backgroundSize: pct > 0 ? `${(10000 / pct).toFixed(2)}% 100%` : "100% 100%",
                 transformOrigin: "left center",
                 animation: "stepi-talent-grow 0.9s cubic-bezier(0.22,0.68,0.28,1) both",
                 animationDelay: `${delay}ms`,
               }}
             />
-            {/* 눈금 — 채움 위에 얹어야 채워진 구간에서도 보인다 */}
-            {SCORE_TICKS.map((t) => (
-              <span
-                key={t}
-                className="absolute inset-y-0 w-px bg-[rgba(27,26,64,0.16)]"
-                style={{ left: `${t}%` }}
-              />
-            ))}
           </span>
         )}
       </span>
