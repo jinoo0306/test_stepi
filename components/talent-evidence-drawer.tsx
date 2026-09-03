@@ -110,7 +110,7 @@ export default function TalentEvidenceDrawer({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-[18px] font-bold text-[var(--ink)]">{axis.axis}</h3>
+                  <h3 className="min-w-0 truncate text-[18px] font-bold text-[var(--ink)]">{axis.axis}</h3>
                   <MockBadge />
                 </div>
                 <p className="mt-1 text-[13px] text-[var(--ink-muted)] tabular-nums">
