@@ -1,12 +1,7 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Pretendard";
-  font-weight: 45 920;
-  font-style: normal;
-  font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
-}
+/* Pretendard 는 app/layout.tsx 의 next/font/local 이 등록한다.
+   여기서 @font-face 를 직접 쓰지 않는다 (--font-pretendard 로 들어온다) */
 
 :root {
   /* === Brand palette (STEPI 로고 기반) === */
@@ -72,7 +67,7 @@
   --color-gold-2: var(--gold-2);
   --color-good: var(--good);
   --color-bad: var(--bad);
-  --font-sans: "Pretendard", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-pretendard), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
