@@ -543,7 +543,7 @@ function Card({
   );
 }
 
-type Suspect = { source: string; location: string; excerpt: string; phrase: string };
+type Suspect = { source: string; location: string; excerpt: string; phrase: string; match?: "문구" | "유사" };
 
 /** 지시문 의심 문장(INGUARD-001). 표시만 하고 점수는 그대로임 */
 function SuspectCard({ items }: { items?: Suspect[] }) {
@@ -561,12 +561,16 @@ function SuspectCard({ items }: { items?: Suspect[] }) {
       </div>
       <div className="space-y-4">
         {items.map((s, i) => {
-          const at = s.excerpt.indexOf(s.phrase);
+          // 유사 항목은 문장 전체가 맞은 문구라 강조하지 않음
+          const at = s.match === "유사" ? -1 : s.excerpt.indexOf(s.phrase);
           return (
             <div key={i} className="flex items-baseline gap-2.5">
               <span className="inline-flex items-center justify-center shrink-0 h-[22px] px-2 rounded-md bg-[var(--p-50)] text-[var(--p-700)] text-[12px] font-bold tabular-nums">
                 {s.location.replace(/^문항 (\d+)$/, (_, n) => `Q${n.padStart(2, "0")}`)}
               </span>
+              {s.match === "유사" && (
+                <span className="shrink-0 inline-block px-2 py-0.5 rounded-full border border-[var(--line-strong)] text-[11px]">유사</span>
+              )}
               <p className="text-[15.5px] leading-[1.75] text-[var(--ink)]">
                 {at < 0 ? s.excerpt : (
                   <>
