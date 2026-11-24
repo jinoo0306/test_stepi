@@ -318,6 +318,7 @@ export interface TuringCard {
     not_in_source?: number;
     judged?: number;
     candidates?: number;
+    invalid?: number;
   } | null;
   delta: number | null;
   prev_denominator: number | null;
@@ -375,17 +376,17 @@ export interface TuringMetricsResponse {
 }
 
 export interface TuringRiskItem {
-  risk_type?: "numeric_mismatch" | "nli_contradiction" | "llm_contradiction" | "llm_unsupported";
+  risk_type?: "faithfulness" | "nli_contradiction" | "llm_contradiction" | "llm_unsupported";
   job_id: string;
   request_id: string | null;
   applicant_id: string;
   score: number | null;
-  numeric_rate: number | null;
-  entity_rate: number | null;
-  nli_entailment_rate: number | null;
-  nli_status: string;
+  checked?: number;
+  confirmed?: number;
   numeric_misses: string[];
   entity_misses: string[];
+  invalid_quotes?: { text: string; where: "summary" | "axis_reason" | "dept_reason" }[];
+  empty_summaries?: { question_id: string; question: string }[];
   verdict?: "contradiction" | "unsupported" | "faithful" | null;
   reason?: string | null;
   nli_contradictions?: Array<{
@@ -401,7 +402,7 @@ export interface TuringRiskItem {
 
 export interface TuringRiskResponse {
   generated_at: string;
-  window: { jobs: number; limit: number; job_id?: string | null };
+  window: { jobs: number; period: TuringPeriod | null; job_id?: string | null };
   items: TuringRiskItem[];
 }
 
@@ -538,8 +539,8 @@ export const api = {
       `/core-passed-baseline`,
     ),
   getTuringMetrics: (period: TuringPeriod = "90d") => http<TuringMetricsResponse>(`/turing/metrics?period=${period}`),
-  getTuringRisks: (limit = 5, maxItems = 12) =>
-    http<TuringRiskResponse>(`/turing/hallucination-risks?limit=${limit}&max_items=${maxItems}`),
+  getTuringRisks: (period: TuringPeriod = "90d", maxItems = 8) =>
+    http<TuringRiskResponse>(`/turing/hallucination-risks?period=${period}&max_items=${maxItems}`),
   listJobs: (params?: { limit?: number; offset?: number; status?: string; trashed?: boolean }) => {
     const qs = new URLSearchParams();
     if (params?.limit != null) qs.set("limit", String(params.limit));

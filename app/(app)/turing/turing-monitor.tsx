@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Activity, RefreshCcw } from "lucide-react";
 import PageHeader from "@/components/page-header";
-import { failReason, api, type TuringMetricsResponse, type TuringPeriod, type TuringRiskItem } from "@/lib/api";
+import { failReason, api, type TuringMetricsResponse, type TuringPeriod, type TuringRiskResponse } from "@/lib/api";
 import Overview from "./overview";
 import JobHistory from "./job-history";
 
@@ -31,7 +31,7 @@ export default function TuringMonitor({ initialTab, initialPeriod }: { initialTa
   const [period, setPeriod] = useState<TuringPeriod>(initialPeriod);
   // 두 요청을 따로 들고 있어야 한쪽만 실패해도 다른 쪽 결과를 정상처럼 섞어 보이지 않음
   const [m, setM] = useState<Slot<TuringMetricsResponse>>(EMPTY_SLOT);
-  const [r, setR] = useState<Slot<TuringRiskItem[]>>(EMPTY_SLOT);
+  const [r, setR] = useState<Slot<TuringRiskResponse>>(EMPTY_SLOT);
 
   // 기간을 빨리 바꾸면 늦게 온 앞 요청이 새 기간 화면을 덮지 않게 가장 최근 요청만 받음
   const seq = useRef(0);
@@ -39,7 +39,7 @@ export default function TuringMonitor({ initialTab, initialPeriod }: { initialTa
     const mine = ++seq.current;
     const [metricsRes, risksRes] = await Promise.allSettled([
       api.getTuringMetrics(period),
-      api.getTuringRisks(5, 8),
+      api.getTuringRisks(period, 8),
     ]);
     if (mine !== seq.current) return;
     const at = new Date();
@@ -50,7 +50,7 @@ export default function TuringMonitor({ initialTab, initialPeriod }: { initialTa
     );
     setR((prev) =>
       risksRes.status === "fulfilled"
-        ? { data: risksRes.value.items, error: null, at }
+        ? { data: risksRes.value, error: null, at }
         : { ...prev, error: failReason(risksRes.reason) },
     );
   }, [period]);
@@ -79,13 +79,15 @@ export default function TuringMonitor({ initialTab, initialPeriod }: { initialTa
     remember(t, period);
   }
   function pickPeriod(p: TuringPeriod) {
-    // 앞 기간 응답이 새 기간 카드처럼 보이지 않게 비움
+    // 앞 기간 응답이 새 기간 카드·목록처럼 보이지 않게 비움
     setM(EMPTY_SLOT);
+    setR(EMPTY_SLOT);
     setPeriod(p);
     remember(tab, p);
   }
 
   const data = m.data && m.data.window.period === period ? m.data : null;
+  const risks = r.data && r.data.window.period === period ? r.data.items : null;
   const state = data ? null : m.error ? "불러오지 못하였습니다" : "불러오는 중";
   const failures = [
     { label: "turing. 지표를", slot: m },
@@ -162,7 +164,7 @@ export default function TuringMonitor({ initialTab, initialPeriod }: { initialTa
       )}
 
       {tab === "overview" ? (
-        <Overview data={data} state={state} risks={r.data} risksError={r.error} />
+        <Overview data={data} state={state} risks={risks} risksError={r.error} />
       ) : (
         <JobHistory data={data} state={state} />
       )}

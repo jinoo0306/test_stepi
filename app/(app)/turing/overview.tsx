@@ -13,10 +13,11 @@ const ROWS: { area: string; span: string; cols: string }[][] = [
   [{ area: "사전스크리닝", span: "lg:col-span-6", cols: "lg:grid-cols-3" }, { area: "정기 성능평가", span: "lg:col-span-6", cols: "lg:grid-cols-3" }],
 ];
 // 분석 건 단위로 잴 수 있어 추이 그래프·평가 내역에 쓰는 지표(FR-008, FR-010)
-export const JOB_CARD_IDS = ["O01", "O03", "O04", "O12", "G01", "G02", "S01", "F03"];
+export const JOB_CARD_IDS = ["O01", "O03", "O04", "O12", "G01", "G02", "S01", "G03", "G08", "F03"];
+const QUOTE_PLACE = { summary: "요약", axis_reason: "5축 사유", dept_reason: "직군 적합도 사유" };
 const DENOMINATOR: Record<string, string> = {
   O01: "요청 {n}명", O03: "분석 {n}건", O04: "분석 {n}건", O12: "문항 {n}개", G01: "숫자 {n}개", G02: "기관 이름 {n}개",
-  S01: "지원자 {n}명", F03: "지원자 {n}명", A01: "확정·기각 {n}건", A06: "확정·기각 {n}건", U02: "판정 {n}건",
+  S01: "지원자 {n}명", G03: "인용 {n}개", G08: "항목 {n}개", F03: "지원자 {n}명", A01: "확정·기각 {n}건", A06: "확정·기각 {n}건", U02: "판정 {n}건",
 };
 
 export function fmtValue(card: Pick<TuringCard, "value" | "unit">) {
@@ -45,6 +46,7 @@ function detailLine(card: TuringCard) {
   }
   if ((card.id === "O03" || card.id === "O04") && d.excluded_jobs) return `시간 기록이 없거나 믿을 수 없어 뺀 분석 ${d.excluded_jobs}건`;
   if (card.id === "S01" && d.not_in_source != null) return `제출 자료에 없는 것 ${d.not_in_source}건`;
+  if (card.id === "G03" && card.value != null) return `원문에 없음 ${d.invalid ?? 0}개`;
   if ((card.id === "A01" || card.id === "A06") && d.candidates != null) {
     const rate = d.candidates ? ` (${((100 * (d.judged ?? 0)) / d.candidates).toFixed(1)}%)` : "";
     return `판정률 ${d.judged ?? 0}/${d.candidates}${rate}`;
@@ -96,7 +98,7 @@ export default function Overview({ data, state, risks, risksError }: {
       <section className="mt-12">
         <div className="flex items-center justify-between mb-5">
           <h2 className="flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.01em]"><span className="mark" />검수 권장 분석</h2>
-          <span className="inline-flex items-center gap-2 text-[13px] text-[var(--ink-muted)]"><AlertTriangle size={14} /> 제출 자료와 일치하지 않을 가능성이 있는 항목 · 최근 분석 5건 기준, 기간 선택과 무관</span>
+          <span className="inline-flex items-center gap-2 text-[13px] text-[var(--ink-muted)]"><AlertTriangle size={14} /> 제출 자료와 일치하지 않을 가능성이 있는 항목</span>
         </div>
         <div className="bg-[var(--paper)] border border-[var(--line-strong)] rounded-xl overflow-hidden">
           {risks === null ? (
@@ -142,6 +144,12 @@ export default function Overview({ data, state, risks, risksError }: {
                       ) : (
                         <div>
                           <div className="truncate">{misses(item.entity_misses, "이름·기관")}</div>
+                          {item.invalid_quotes?.map((q, i) => (
+                            <div key={i} className="mt-1 truncate">원문에 없음 · {QUOTE_PLACE[q.where]}: {q.text}</div>
+                          ))}
+                          {!!item.empty_summaries?.length && (
+                            <div className="mt-1 line-clamp-2">요약이 빈 문항: {item.empty_summaries.map((e) => e.question || e.question_id).join(", ")}</div>
+                          )}
                           <div className="mt-1 line-clamp-2">{item.generated_excerpt}</div>
                         </div>
                       )}
@@ -248,7 +256,12 @@ function riskLabel(item: TuringRiskItem) {
     case "llm_contradiction": return "내용 모순";
     case "llm_unsupported": return "근거 없음";
     case "nli_contradiction": return "자료와 불일치";
-    default: return "숫자·이름 불일치";
+    default: return (
+      <>
+        <div>충실성 점수 {item.score?.toFixed(1)}</div>
+        <div className="text-[12.5px] text-[var(--ink-muted)]">검사 {item.checked} · 확인 {item.confirmed}</div>
+      </>
+    );
   }
 }
 

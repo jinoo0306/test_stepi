@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import type { TuringMetricsResponse } from "@/lib/api";
 import { fmtValue, JOB_CARD_IDS } from "./overview";
 
-const COLS = "grid-cols-[minmax(140px,2fr)_48px_64px_64px_92px_repeat(8,minmax(60px,1fr))]";
+const COLS = "grid-cols-[minmax(140px,2fr)_48px_64px_64px_92px_repeat(10,minmax(60px,1fr))]";
 
 export default function JobHistory({ data, state }: { data: TuringMetricsResponse | null; state: string | null }) {
   const [q, setQ] = useState("");
@@ -33,7 +33,7 @@ export default function JobHistory({ data, state }: { data: TuringMetricsRespons
         </label>
       </div>
       <div className="bg-[var(--paper)] border border-[var(--line-strong)] rounded-xl overflow-x-auto">
-        <div className="min-w-[1000px]">
+        <div className="min-w-[1160px]">
           <div data-history-head className={`grid ${COLS} gap-2 px-4 py-3 bg-[var(--bg-2)] border-b border-[var(--line-strong)] text-[13px] font-semibold text-[var(--ink-muted)]`}>
             <div>요청 번호</div>
             <div className="text-center">상태</div>
