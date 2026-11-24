@@ -9,8 +9,6 @@ import TimelineBar from "@/components/timeline-bar";
 import DeptFitList from "@/components/dept-fit-list";
 import PrintAuto from "@/components/print-auto";
 import PrintButton from "@/components/print-button";
-import AiUsageSection from "@/components/ai-usage-section";
-import { ExperimentalBadge } from "@/components/mock-mark";
 import TalentTypesSection from "@/components/talent-types-section";
 import { aiUsageHeadline } from "@/lib/ai-usage";
 import { cleanReason } from "@/lib/clean-reason";
@@ -42,7 +40,7 @@ const PRINT_RADAR_HEIGHT = 230;
  * 글 길이가 달라도 한 항목이 차지하는 자리는 같음. 섹션끼리는 빈틈 없이 이어 붙이고,
  * 내용이 없는 섹션은 한 줄 안내로 접음.
  *
- * 실험용 AI 사용 의심도와 목업인 인재상 유형도 함께 싣되, 화면과 같은 배지를 붙임
+ * AI 사용 의심도는 점수만 싣고 근거는 뺌. 목업인 인재상 유형은 화면과 같은 배지를 붙임
  */
 export default async function ApplicantPrintPage({
   params,
@@ -315,15 +313,6 @@ export default async function ApplicantPrintPage({
         ) : (
           <EmptyRow title="직군 적합도">산출된 결과가 없습니다.</EmptyRow>
         )}
-
-        {/* AI 사용 의심도 근거: 대시보드와 같은 자리(자기소개서 핵심 바로 위) */}
-        <Card
-          title="AI 사용 의심도 근거"
-          badge={<ExperimentalBadge />}
-          desc="자기소개서의 문자 패턴을 비교한 실험 점수입니다. AI 사용 비율이나 작성 확률이 아닙니다."
-        >
-          <AiUsageSection detection={applicant.ai_detection} />
-        </Card>
 
         {/* 자기소개서 핵심 */}
         {applicant.summary?.by_question && applicant.summary.by_question.length > 0 && (
