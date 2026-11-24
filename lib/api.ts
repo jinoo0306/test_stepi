@@ -415,6 +415,21 @@ export interface FeedbackEntry {
   updated_at: string;
 }
 
+/** 인재상 기준 문장 한 줄(TALENT-001). judged_by: 규칙 판정(code) 또는 판정 대기(pending) */
+export type TalentCriterion = {
+  item_id: string;
+  no: number;
+  name: string;
+  question: string;
+  rule: string;
+  x_example: string | null;
+  judged_by: "code" | "pending";
+  pending_reason: string | null;
+  updated_at: string;
+};
+export type TalentCriteria = { version: string; axes: { no: number; axis: string; items: TalentCriterion[] }[] };
+export type TalentCriterionInput = Pick<TalentCriterion, "name" | "question" | "rule" | "x_example">;
+
 /** 백엔드가 주고받는 인재상 세트. lib/talent-selection.ts 의 TalentSet 과 같은 모양 */
 export interface TalentSetPayload {
   id: string;
@@ -498,6 +513,16 @@ export const asError = (e: unknown): Error => (e instanceof Error ? e : new Erro
 export const isNotFound = (e: unknown): boolean => e instanceof ApiError && e.status === 404;
 
 export const api = {
+  // 인재상 기준 문장(TALENT-001)
+  getTalentCriteria: () => http<TalentCriteria>("/talent-criteria"),
+  addTalentCriterion: (axisNo: number, body: TalentCriterionInput) =>
+    http<TalentCriterion>(`/talent-criteria/axes/${axisNo}/items`, { method: "POST", body: JSON.stringify(body) }),
+  putTalentCriterion: (itemId: string, body: TalentCriterionInput & { updated_at: string }) =>
+    http<TalentCriterion>(`/talent-criteria/items/${encodeURIComponent(itemId)}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteTalentCriterion: (itemId: string, updatedAt: string) =>
+    http<void>(`/talent-criteria/items/${encodeURIComponent(itemId)}?updated_at=${encodeURIComponent(updatedAt)}`, {
+      method: "DELETE",
+    }),
   // 분석별 선정 인재상 세트 (lib/talent-selection.ts 가 씀).
   // id 를 인코딩하지 않으면 "../" 가 든 값이 전송 전에 정규화돼 다른 엔드포인트를 때림
   getTalentSelection: (id: string) =>

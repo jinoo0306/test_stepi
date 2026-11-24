@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Database,
   SlidersHorizontal,
+  ListChecks,
   LogOut,
   Menu,
   type LucideIcon,
@@ -111,7 +112,7 @@ export default function Sidebar() {
       key: "analysis",
       label: "지원자 분석",
       icon: LayoutDashboard,
-      match: (p) => p.startsWith("/jobs") || p.startsWith("/trash"),
+      match: (p) => p.startsWith("/jobs") || p.startsWith("/trash") || p.startsWith("/talent"),
       children: [
         {
           href: "/jobs",
@@ -124,6 +125,12 @@ export default function Sidebar() {
           label: "신규 분석 생성",
           icon: FilePlus2,
           match: (p) => p === "/jobs/new",
+        },
+        {
+          href: "/talent",
+          label: "인재상 기준",
+          icon: ListChecks,
+          match: (p) => p.startsWith("/talent"),
         },
         {
           href: "/trash",
