@@ -25,6 +25,10 @@ import { clearApiToken } from "@/lib/api";
 
 const STORAGE_KEY = "stepi-sidebar-collapsed";
 
+// turing. 의 끝 점만 민트(int. 브랜드 색)로 칠함. 팔레트 밖 예외는 이 점뿐(TURING-001 FR-011)
+const withDot = (label: string) =>
+  label.endsWith(".") ? <span>{label.slice(0, -1)}<span className="text-[#40E0D0]">.</span></span> : label;
+
 type NavLeaf = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean };
 type Feature = {
   key: string;
@@ -249,7 +253,7 @@ export default function Sidebar() {
                     }`}
                   >
                     <FIcon size={18} strokeWidth={2} className={groupActive ? "text-[var(--secondary-2)]" : ""} />
-                    {f.label}
+                    {withDot(f.label)}
                   </Link>
                 ) : (
                   <div className="flex items-center gap-2.5 px-2.5 py-1.5 text-[15.5px] font-semibold text-[var(--ink)]">

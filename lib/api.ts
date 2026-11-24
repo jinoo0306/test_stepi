@@ -300,9 +300,42 @@ export interface DeptFitResponse {
 }
 
 
+export type TuringPeriod = "30d" | "90d" | "all";
+
+// TURING-001 핵심 지표 카드. 값은 백엔드가 계산함
+export interface TuringCard {
+  id: string;
+  name: string;
+  area: string;
+  value: number | null;
+  unit: "%" | "초" | "건" | "점" | "상관";
+  denominator: number | null;
+  unmeasured_reason: string | null;
+  detail: {
+    failed_by_cause?: Record<string, number>;
+    unknown?: number;
+    excluded_jobs?: number;
+    not_in_source?: number;
+    judged?: number;
+    candidates?: number;
+  } | null;
+  delta: number | null;
+  prev_denominator: number | null;
+}
+
 export interface TuringMetricsResponse {
   generated_at: string;
-  window: { jobs: number; limit: number };
+  window: {
+    jobs: number;
+    job_id?: string | null;
+    period: TuringPeriod | null;
+    from: string | null;
+    to: string;
+    excluded_jobs: number;
+    verdicts: number;
+    excluded_tickets: number;
+  };
+  cards: TuringCard[];
   metrics: {
     hallucination_prevention: {
       rate: number | null;
@@ -337,6 +370,7 @@ export interface TuringMetricsResponse {
     created_at: string;
     updated_at: string;
     format_errors: string[];
+    job_cards: TuringCard[];
   }>;
 }
 
@@ -478,7 +512,7 @@ export const api = {
     http<{ core_passed_baseline: Record<string, number>; n_passed_matched: number; scale: string }>(
       `/core-passed-baseline`,
     ),
-  getTuringMetrics: (limit = 30) => http<TuringMetricsResponse>(`/turing/metrics?limit=${limit}`),
+  getTuringMetrics: (period: TuringPeriod = "90d") => http<TuringMetricsResponse>(`/turing/metrics?period=${period}`),
   getTuringRisks: (limit = 5, maxItems = 12) =>
     http<TuringRiskResponse>(`/turing/hallucination-risks?limit=${limit}&max_items=${maxItems}`),
   listJobs: (params?: { limit?: number; offset?: number; status?: string; trashed?: boolean }) => {
