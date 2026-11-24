@@ -122,7 +122,7 @@ function FailureGroupPanel({ group }: { group: FailureGroup }) {
         ))}
       </div>
 
-      {group.code === "unknown" && (
+      {(group.code === "unknown" || group.applicants.some((a) => a.raw_summary)) && (
         <details className="mt-4">
           <summary className="text-[15px] text-[var(--secondary-2)] cursor-pointer">오류 원문 보기</summary>
           <div className="mt-2 flex flex-col gap-1">

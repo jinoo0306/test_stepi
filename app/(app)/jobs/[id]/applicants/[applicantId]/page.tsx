@@ -1,6 +1,6 @@
 import AiDetectionButton from "@/components/ai-detection-button";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { AlertTriangle, ChevronLeft } from "lucide-react";
 import { api, asError, feedbackKey, isNotFound } from "@/lib/api";
 import RadarCard from "@/components/radar-card";
 import FeedbackButtons from "@/components/feedback-buttons";
@@ -187,6 +187,7 @@ export default async function ApplicantDetailPage({
               <div className="mt-6">
                 {/* --- 단일 컬럼: 학력·이력이 가운데로 들어오며 우측 레일 폐지 --- */}
                 <div className="min-w-0 flex flex-col gap-5">
+                <SuspectCard items={(applicant as { input_suspects?: Suspect[] }).input_suspects} />
                 {/* 종합 요약 */}
                 <Card
                   title="종합 요약"
@@ -369,7 +370,9 @@ export default async function ApplicantDetailPage({
                         rows.forEach((q) => {
                           let g = map.get(q.question_id);
                           if (!g) {
-                            g = { qid: q.question_id, qNum: order.length + 1, question: q.question, items: [] };
+                            // 빈 답변 문항이 빠져도 원본 문항 번호(essay_N)를 씀. 의심 문장 카드와 같은 번호
+                            const n = Number(/^essay_(\d+)$/.exec(q.question_id)?.[1]);
+                            g = { qid: q.question_id, qNum: n || order.length + 1, question: q.question, items: [] };
                             map.set(q.question_id, g);
                             order.push(g);
                           }
@@ -536,6 +539,47 @@ function Card({
         {action && <div className="flex items-center gap-3 shrink-0">{action}</div>}
       </div>
       {children}
+    </section>
+  );
+}
+
+type Suspect = { source: string; location: string; excerpt: string; phrase: string };
+
+/** 지시문 의심 문장(INGUARD-001). 표시만 하고 점수는 그대로임 */
+function SuspectCard({ items }: { items?: Suspect[] }) {
+  if (!items?.length) return null;
+  return (
+    <section className="panel" style={{ borderColor: "var(--bad)" }}>
+      <div className="pb-3.5 mb-4 border-b border-[var(--line)]">
+        <div className="flex flex-wrap items-center gap-2 text-[var(--bad)]">
+          <AlertTriangle size={20} strokeWidth={2.2} />
+          <h2 className="text-[18px] font-bold tracking-[-0.012em]">지시문 의심 문장 {items.length}건</h2>
+        </div>
+        <p className="mt-1.5 text-[17px] text-[var(--ink-muted)] leading-[1.6] break-keep">
+          모델에게 점수나 판정을 바꾸라고 요구하는 문장입니다. 모델에는 평가 자료로만 전달했고, 점수 계산은 다른 지원자와 같습니다.
+        </p>
+      </div>
+      <div className="space-y-4">
+        {items.map((s, i) => {
+          const at = s.excerpt.indexOf(s.phrase);
+          return (
+            <div key={i} className="flex items-baseline gap-2.5">
+              <span className="inline-flex items-center justify-center shrink-0 h-[22px] px-2 rounded-md bg-[var(--p-50)] text-[var(--p-700)] text-[12px] font-bold tabular-nums">
+                {s.location.replace(/^문항 (\d+)$/, (_, n) => `Q${n.padStart(2, "0")}`)}
+              </span>
+              <p className="text-[15.5px] leading-[1.75] text-[var(--ink)]">
+                {at < 0 ? s.excerpt : (
+                  <>
+                    {s.excerpt.slice(0, at)}
+                    <b className="font-bold text-[var(--bad)]">{s.phrase}</b>
+                    {s.excerpt.slice(at + s.phrase.length)}
+                  </>
+                )}
+              </p>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
