@@ -261,7 +261,7 @@ export default async function ApplicantDetailPage({
                       />
                     }
                   >
-                    <RadarCard data={coreData} color="#33307A" baseline={coreBaseline} />
+                    <RadarCard data={coreData} color="#373282" baseline={coreBaseline} />
                   </Card>
                 ) : (
                   <Card title="핵심인재 유사도" desc="합격자 자기소개서와 비슷한 정도를 나타냅니다.">
@@ -288,7 +288,7 @@ export default async function ApplicantDetailPage({
                       />
                     }
                   >
-                    <RadarCard data={fitData} color="#F39200" max={100} />
+                    <RadarCard data={fitData} color="#ED911A" max={100} />
                   </Card>
                 )}
                 </div>

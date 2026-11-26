@@ -117,8 +117,8 @@ function toSegments(
 }
 
 /** 트랙별 색: 같은 트랙 안에서 순서대로 진해짐 (겹쳐도 구분되도록) */
-const EDU_COLORS = ["#33307A", "#4A46A8", "#6B67C4", "#8C89D6"];
-const CAR_COLORS = ["#F39200", "#D97D00", "#B86A00", "#F5A733", "#FFC166"];
+const EDU_COLORS = ["#373282", "#4A46A8", "#6B67C4", "#8C89D6"];
+const CAR_COLORS = ["#ED911A", "#D97D00", "#B86A00", "#F5A733", "#FFC166"];
 
 /**
  * 얇은 막대의 최소 폭(%). 짧은 항목이 긴 축에서 실 조각이 되지 않게 함.

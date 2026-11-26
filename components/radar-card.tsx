@@ -29,7 +29,7 @@ interface Props {
 
 export default function RadarCard({
   data,
-  color = "#33307A",
+  color = "#373282",
   max = 10,
   baseline = null,
   valueLabel = "지원자",

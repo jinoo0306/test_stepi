@@ -262,12 +262,12 @@ export default async function ApplicantPrintPage({
               title="핵심인재 유사도"
               desc={`합격자 자기소개서와 비슷한 정도를 나타냅니다. ${baselineNote(hasBaseline, baselineFailed)}`}
             >
-              <RadarCard data={coreData} color="#33307A" baseline={coreBaseline} height={PRINT_RADAR_HEIGHT} />
+              <RadarCard data={coreData} color="#373282" baseline={coreBaseline} height={PRINT_RADAR_HEIGHT} />
             </Card>
           )}
           {fitData.length > 0 && (
             <Card figure title="직무 적합도" desc="직무에서 요구하는 5개 역량을 기준으로 평가한 적합도입니다.">
-              <RadarCard data={fitData} color="#F39200" max={100} height={PRINT_RADAR_HEIGHT} />
+              <RadarCard data={fitData} color="#ED911A" max={100} height={PRINT_RADAR_HEIGHT} />
             </Card>
           )}
         </div>

@@ -456,7 +456,7 @@ function SetBox({
         {items.length >= RADAR_MIN && (
           <RadarCard
             data={radarData}
-            color="#F39200"
+            color="#ED911A"
             max={TALENT_SCORE_DISPLAY_MAX}
             height={height}
             labelSize={labelSize}

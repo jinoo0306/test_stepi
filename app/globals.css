@@ -12,7 +12,7 @@
   --p-400: #6E69B5;
   --p-500: #4F4A9D;
   --p-600: #3F3B8A;
-  --p-700: #33307A;
+  --p-700: #373282;
   --p-800: #28265D;
   --p-900: #1B1A40;
 
@@ -21,7 +21,7 @@
   --s-200: #FBCB81;
   --s-300: #F8B14A;
   --s-400: #F5A21F;
-  --s-500: #F39200;
+  --s-500: #ED911A;
   --s-600: #C97800;
   --s-700: #9C5D00;
 
@@ -272,13 +272,13 @@ html { scrollbar-gutter: stable; }
   display: inline-block;
   width: 6px; height: 6px;
   background: var(--secondary);
-  box-shadow: 0 0 0 0 rgba(243, 146, 0, 0.45);
+  box-shadow: 0 0 0 0 rgba(237, 145, 26, 0.45);
   animation: pulse 1.6s ease-in-out infinite;
 }
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(243, 146, 0, 0.5); }
-  70% { box-shadow: 0 0 0 6px rgba(243, 146, 0, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(243, 146, 0, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(237, 145, 26, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(237, 145, 26, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(237, 145, 26, 0); }
 }
 
 /* animated trailing dots: "분석중." -> ".." -> "..." -> "." 반복 */
