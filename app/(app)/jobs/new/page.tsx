@@ -2,90 +2,70 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { UploadCloud, FileSpreadsheet, FilePlus2, FileArchive } from "lucide-react";
+import { FilePlus2 } from "lucide-react";
+import Link from "next/link";
 import { failText, api } from "@/lib/api";
 import PageHeader from "@/components/page-header";
-
-const TRACKS = [
-  { value: "", label: "선택 (미선택 시 자동 추정)" },
-  { value: "연구직", label: "연구직" },
-  { value: "전문연구직", label: "전문연구직" },
-  { value: "행정직", label: "행정직" },
-];
+import UploadForm, { type PaperHandOff } from "../../prelim/new/upload-form";
 
 export default function NewJobPage() {
   return (
     <Suspense fallback={null}>
-      <FreshForm />
+      <Entry />
     </Suspense>
   );
 }
 
-// 만든 분석 번호는 주소에 둠. 새로고침해도 논문 ZIP 올리기 화면이 남고 분석을 다시 만들지 않음.
-// 메뉴로 번호 없는 주소에 오면 지난 입력을 버린 새 화면
-function FreshForm() {
-  const job = useSearchParams().get("job");
-  const [prev, setPrev] = useState(job);
-  const [gen, setGen] = useState(0);
-  if (prev !== job) {
-    setPrev(job);
-    if (!job) setGen(gen + 1);
+// 업로드 입구는 이 화면 하나(PRELIM-003 CHG-002). 만든 분석 번호는 주소에 둠. 새로고침해도 논문 ZIP 올리기 화면이 남고
+// 분석을 다시 만들지 않음. 메뉴로 번호 없는 주소에 오면 지난 입력을 버린 새 화면
+function Entry() {
+  const sp = useSearchParams();
+  const router = useRouter();
+  const job = sp.get("job");
+  const [handed, setHanded] = useState<PaperHandOff | null>(null);
+  if (job) {
+    return (
+      <PaperResult
+        key={job}
+        createdJobId={job}
+        createdPrelim={sp.get("prelim")}
+        handed={handed?.jobId === job ? handed : null}
+        onStarted={() => setHanded(null)}
+      />
+    );
   }
-  return <NewJobForm key={gen} createdJobId={job} />;
+  return (
+    <UploadForm
+      onPaper={(h) => {
+        setHanded(h);
+        // 업로드 화면 자리를 바꿔 뒤로 가기로 빈 업로드 화면이 나오지 않게 함
+        router.replace(`/jobs/new?job=${encodeURIComponent(h.jobId)}${h.ticket ? `&prelim=${encodeURIComponent(h.ticket)}` : ""}`);
+      }}
+    />
+  );
 }
 
-function NewJobForm({ createdJobId }: { createdJobId: string | null }) {
+function PaperResult({
+  createdJobId,
+  createdPrelim,
+  handed,
+  onStarted,
+}: {
+  createdJobId: string;
+  createdPrelim: string | null;
+  handed: PaperHandOff | null;
+  onStarted: () => void;
+}) {
   const router = useRouter();
-  const [file, setFile] = useState<File | null>(null);
-  const [infoFile, setInfoFile] = useState<File | null>(null);
   const [pdfZip, setPdfZip] = useState<File | null>(null);
-  const [label, setLabel] = useState("");
-  const [track, setTrack] = useState("");
-  const [mode, setMode] = useState<"full" | "score_only" | "questions_only">("full");
   const [busy, setBusy] = useState(false);
-  const [busyMsg, setBusyMsg] = useState<string>("업로드 중");
   const [err, setErr] = useState<string | null>(null);
   const [zipSummary, setZipSummary] = useState<string | null>(null);
   const [zipErrors, setZipErrors] = useState<string[]>([]);
   const [unmatchedApplicants, setUnmatchedApplicants] = useState<string[]>([]);
-  const [createWarnings, setCreateWarnings] = useState<string[]>([]);
-  const submitting = useRef(false);
-  const [sheets, setSheets] = useState<string[]>([]);
-  const [sheetName, setSheetName] = useState<string>("");
-  const [infoSheets, setInfoSheets] = useState<string[]>([]);
-  const [infoSheetName, setInfoSheetName] = useState<string>("");
-  const [dragOver, setDragOver] = useState<"essay" | "info" | "zip" | null>(null);
+  const [createWarnings] = useState(handed?.warnings ?? []);
 
-  // 드래그&드롭으로 받은 파일을 클릭 선택과 동일하게 처리
-  const acceptDrop = (zone: "essay" | "info" | "zip") => (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(null);
-    const f = e.dataTransfer.files?.[0] ?? null;
-    if (!f) return;
-    if (zone === "essay") {
-      setFile(f);
-      setSheets([]);
-      setSheetName("");
-      loadSheets(f, "essay");
-    } else if (zone === "info") {
-      setInfoFile(f);
-      setInfoSheets([]);
-      setInfoSheetName("");
-      loadSheets(f, "info");
-    } else {
-      setPdfZip(f);
-    }
-  };
-  const dragProps = (zone: "essay" | "info" | "zip") => ({
-    onDragOver: (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(zone);
-    },
-    onDragLeave: () => setDragOver(null),
-    onDrop: acceptDrop(zone),
-  });
-
-  // 올리는 중 새로고침·창 닫기는 묻고 떠남(분석은 서버에 생겨도 화면이 번호를 잃음)
+  // 올리는 중 새로고침·창 닫기는 묻고 떠남
   useEffect(() => {
     if (!busy) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -96,394 +76,110 @@ function NewJobForm({ createdJobId }: { createdJobId: string | null }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [busy]);
 
-  const loadSheets = async (f: File, target: "essay" | "info") => {
-    try {
-      const names = await api.listExcelSheets(f);
-      if (target === "essay") {
-        setSheets(names);
-        setSheetName(names.length === 1 ? names[0] : "");
-      } else {
-        setInfoSheets(names);
-        setInfoSheetName(names.length === 1 ? names[0] : "");
-      }
-    } catch {
-      setErr("시트 목록을 읽을 수 없습니다.");
-    }
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting.current || (!createdJobId && !file)) return;
-    submitting.current = true;
+  const upload = async (zip: File) => {
     setBusy(true);
-    setBusyMsg(createdJobId ? "논문 PDF ZIP 업로드 중" : "자기소개서 업로드 중");
     setErr(null);
     setZipSummary(null);
     setZipErrors([]);
     setUnmatchedApplicants([]);
     try {
-      let jobId = createdJobId;
-      if (!jobId && file) {
-        const r = await api.uploadExcel(file, {
-          request_id: label || undefined,
-          mode,
-          job_track: track || undefined,
-          info_file: infoFile ?? undefined,
-          sheet_name: sheetName || undefined,
-          info_sheet_name: infoSheetName || undefined,
-        });
-        jobId = r.job_id;
-        // ZIP 을 같이 올릴 때만(바로 결과로 가면 뒤로 가기가 빈 화면이어야 함), 이미 다른 화면으로 갔으면 두지 않음
-        if (pdfZip && window.location.pathname === "/jobs/new")
-          window.history.replaceState(null, "", `/jobs/new?job=${encodeURIComponent(jobId)}`);
-        setCreateWarnings(r.warnings ?? []);
-      }
-      if (!jobId) return;
-      if (pdfZip) {
-        setBusyMsg("논문 PDF ZIP 업로드 중");
-        try {
-          const bulk = await api.bulkUploadPapers(jobId, pdfZip);
-          setZipSummary(
-            `논문 PDF ${bulk.queued}건의 분석을 시작하였습니다(중복 제외 ${bulk.duplicate_skipped}건, 미연결 지원자 ${bulk.unmatched_applicants.length}명).`,
-          );
-          setZipErrors(bulk.errors);
-          setUnmatchedApplicants(bulk.unmatched_applicants);
-        } catch (zerr) {
-          setErr(failText(zerr, "자기소개서 분석은 시작되었으나 논문 PDF ZIP 업로드에 실패하였습니다."));
-        }
-        // 생성된 분석은 유지하고 ZIP 결과를 확인, 재시도한 뒤 이동함
-        return;
-      }
-
-      router.push(`/jobs/${encodeURIComponent(jobId)}`);
-    } catch (e) {
-      setErr(failText(e, "업로드에 실패하였습니다."));
+      const bulk = await api.bulkUploadPapers(createdJobId, zip);
+      setZipSummary(
+        `논문 PDF ${bulk.queued}건의 분석을 시작하였습니다(중복 제외 ${bulk.duplicate_skipped}건, 미연결 지원자 ${bulk.unmatched_applicants.length}명).`,
+      );
+      setZipErrors(bulk.errors);
+      setUnmatchedApplicants(bulk.unmatched_applicants);
+    } catch (zerr) {
+      setErr(failText(zerr, "자기소개서 분석은 시작되었으나 논문 PDF ZIP 업로드에 실패하였습니다."));
     } finally {
-      submitting.current = false;
       setBusy(false);
     }
   };
 
-  if (createdJobId) {
-    return (
-      <div className="px-8 lg:px-12 py-9 max-w-3xl mx-auto fade-up">
-        <PageHeader
-          eyebrow="지원자 분석"
-          icon={FilePlus2}
-          title="논문 PDF 업로드 결과"
-          description="자기소개서 분석을 시작하였습니다. 논문 업로드 결과를 확인한 후 분석 결과로 이동해 주십시오."
-        />
-        <form onSubmit={submit} className="space-y-6 mt-6 panel">
-          {busy && <p role="status">{busyMsg}</p>}
-          {err && <p role="alert" className="text-[var(--bad)] break-words">{err}</p>}
-          {createWarnings.length > 0 && (
-            <section aria-label="입력 안내">
-              <h2 className="font-semibold">입력 안내 {createWarnings.length}건</h2>
-              <ul className="list-disc pl-5 mt-2 space-y-1 break-words">
-                {createWarnings.map((message, index) => <li key={index}>{message}</li>)}
-              </ul>
-            </section>
-          )}
-          {zipSummary && <p role="status">{zipSummary}</p>}
-          {zipErrors.length > 0 && (
-            <section aria-label="처리하지 못한 논문">
-              <h2 className="font-semibold">논문 처리 안내 {zipErrors.length}건</h2>
-              <ul className="list-disc pl-5 mt-2 space-y-1 break-words">
-                {zipErrors.map((message, index) => <li key={index}>{message}</li>)}
-              </ul>
-            </section>
-          )}
-          {unmatchedApplicants.length > 0 && (
-            <section aria-label="연결하지 못한 지원자">
-              <h2 className="font-semibold">연결하지 못한 지원자 {unmatchedApplicants.length}명</h2>
-              <p className="mt-2 break-words">{unmatchedApplicants.join(", ")}</p>
-              <p className="mt-2">폴더명의 지원자 번호가 자기소개서의 지원자 번호와 같은지 확인해 주십시오.</p>
-            </section>
-          )}
-          <label className="block space-y-2">
-            <span className="block">논문 PDF ZIP 다시 선택 (PDF 파일 1개당 최대 50MB)</span>
-            <input
-              type="file"
-              className="block w-full min-w-0 max-w-full"
-              accept=".zip,application/zip,application/x-zip-compressed"
-              disabled={busy}
-              onChange={(e) => setPdfZip(e.target.files?.[0] ?? null)}
-            />
-          </label>
-          <p className="text-[13px] text-[var(--ink-muted)]">
-            용량을 초과한 경우 파일을 나누어 업로드해 주십시오. 다시 업로드해도 자기소개서 분석은 새로 생성되지 않습니다.
-            이미 등록된 논문은 중복으로 제외됩니다. 분석을 시작하지 못한 논문은 분석 결과 화면에서 상태를 확인해 주십시오.
-          </p>
-          <div className="flex flex-wrap gap-3 justify-end">
-            <button type="submit" className="btn-primary" disabled={busy || !pdfZip}>
-              {busy ? busyMsg : "논문 ZIP 재업로드"}
-            </button>
-            <button type="button" className="btn-primary" disabled={busy}
-              onClick={() => router.push(`/jobs/${encodeURIComponent(createdJobId)}`)}>
-              분석 결과 보기
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  }
+  // 업로드 화면에서 고른 ZIP 은 이 화면에 오자마자 한 번 올리고 넘겨받은 것은 비움(앞뒤로 가기로 다시 올리지 않게)
+  const started = useRef(false);
+  useEffect(() => {
+    if (!handed || started.current) return;
+    started.current = true;
+    onStarted();
+    void upload(handed.zip);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handed]);
 
   return (
     <div className="px-8 lg:px-12 py-9 max-w-3xl mx-auto fade-up">
       <PageHeader
-        back={{ href: "/jobs", label: "분석 목록" }}
         eyebrow="지원자 분석"
         icon={FilePlus2}
-        title="신규 분석 생성"
-        description={"업로드한 파일의 자기소개서를 일괄 분석합니다.\n분석은 자동으로 진행되며, 진행 상태는 다음 화면에서 실시간으로 확인할 수 있습니다."}
+        title="논문 PDF 업로드 결과"
+        description="자기소개서 분석을 시작하였습니다. 논문 업로드 결과를 확인한 후 분석 결과로 이동해 주십시오."
       />
-
-      <form onSubmit={submit} className="space-y-10 mt-6 panel">
-        <label className="block">
-          <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-            자기소개서 (.xlsx)
-          </span>
-          <label
-            {...dragProps("essay")}
-            className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed transition cursor-pointer py-10 px-6 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--ink)] ${
-              dragOver === "essay"
-                ? "border-[var(--secondary)] bg-[var(--secondary)]/8"
-                : "border-[var(--line-strong)] bg-[var(--bg-2)]/40 hover:bg-[var(--bg-2)]"
-            }`}
-          >
-            <input
-              type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              className="sr-only"
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                setFile(f);
-                setSheets([]);
-                setSheetName("");
-                if (f) loadSheets(f, "essay");
-              }}
-            />
-            {file ? (
-              <>
-                <FileSpreadsheet size={28} strokeWidth={1.4} className="text-[var(--gold-2)]" />
-                <div className="text-center">
-                  <div className="text-[15px] font-medium">{file.name}</div>
-                  <div className="text-[13px] text-[var(--ink-muted)] mt-1">
-                    {(file.size / 1024).toFixed(0)} KB · 클릭하여 변경
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <UploadCloud size={28} strokeWidth={1.4} className="text-[var(--ink-muted)]" />
-                <div className="text-center">
-                  <div className="text-[15px] font-medium">자기소개서 엑셀 파일을 끌어다 놓거나 클릭하여 선택해 주십시오.</div>
-                </div>
-              </>
-            )}
-          </label>
-          {sheets.length > 0 && (
-            <div className="mt-3">
-              <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-1.5">
-                분석할 시트 ({sheets.length}개 감지)
-              </span>
-              <select
-                className="input appearance-none"
-                value={sheetName}
-                onChange={(e) => setSheetName(e.target.value)}
-                required={sheets.length > 1}
-              >
-                {sheets.length > 1 && <option value="">시트 선택</option>}
-                {sheets.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          )}
-        </label>
-
-        <label className="block">
-          <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-            지원정보 (선택 · 논문·학술지 게재 내역)
-          </span>
-          <label
-            {...dragProps("info")}
-            className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed transition cursor-pointer py-7 px-6 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--ink)] ${
-              dragOver === "info"
-                ? "border-[var(--secondary)] bg-[var(--secondary)]/8"
-                : "border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)]"
-            }`}
-          >
-            <input
-              type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              className="sr-only"
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                setInfoFile(f);
-                setInfoSheets([]);
-                setInfoSheetName("");
-                if (f) loadSheets(f, "info");
-              }}
-            />
-            {infoFile ? (
-              <>
-                <FileSpreadsheet size={22} strokeWidth={1.4} className="text-[var(--gold-2)]" />
-                <div className="text-center">
-                  <div className="text-[15px] font-medium">{infoFile.name}</div>
-                  <div className="text-[13px] text-[var(--ink-muted)] mt-1">
-                    {(infoFile.size / 1024).toFixed(0)} KB · 클릭하여 변경
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <UploadCloud size={22} strokeWidth={1.4} className="text-[var(--ink-muted)]" />
-                <div className="text-center">
-                  <div className="text-[15px] font-medium">지원정보 엑셀 파일을 끌어다 놓거나 클릭하여 선택해 주십시오.</div>
-                </div>
-              </>
-            )}
-          </label>
-          {infoSheets.length > 0 && (
-            <div className="mt-3">
-              <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-1.5">
-                지원정보 시트 ({infoSheets.length}개 감지)
-              </span>
-              <select
-                className="input appearance-none"
-                value={infoSheetName}
-                onChange={(e) => setInfoSheetName(e.target.value)}
-                required={infoSheets.length > 1}
-              >
-                {infoSheets.length > 1 && <option value="">시트 선택</option>}
-                {infoSheets.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          )}
-        </label>
-
-        <label className="block">
-          <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-            논문 PDF (선택 · 압축파일 · PDF 파일 1개당 최대 50MB)
-          </span>
-          <label
-            {...dragProps("zip")}
-            className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed transition cursor-pointer py-7 px-6 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--ink)] ${
-              dragOver === "zip"
-                ? "border-[var(--secondary)] bg-[var(--secondary)]/8"
-                : "border-[var(--line)] bg-[var(--bg-2)]/30 hover:bg-[var(--bg-2)]"
-            }`}
-          >
-            <input
-              type="file"
-              accept=".zip,application/zip,application/x-zip-compressed"
-              className="sr-only"
-              onChange={(e) => setPdfZip(e.target.files?.[0] ?? null)}
-            />
-            {pdfZip ? (
-              <>
-                <FileArchive size={22} strokeWidth={1.4} className="text-[var(--gold-2)]" />
-                <div className="text-center">
-                  <div className="text-[15px] font-medium">{pdfZip.name}</div>
-                  <div className="text-[13px] text-[var(--ink-muted)] mt-1">
-                    {(pdfZip.size / 1024 / 1024).toFixed(1)} MB · 클릭하여 변경
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <UploadCloud size={22} strokeWidth={1.4} className="text-[var(--ink-muted)]" />
-                <div className="text-center">
-                  <div className="text-[15px] font-medium">논문 PDF 압축 파일(ZIP)을 끌어다 놓거나 클릭하여 선택해 주십시오.</div>
-                  <div className="text-[13px] text-[var(--ink-muted)] mt-1 whitespace-pre-line">
-                    {"지원자 번호별로 폴더를 만들어 해당 지원자의 논문 PDF를 저장한 후, 전체 폴더를 ZIP 파일로 압축하여 업로드해 주십시오.\n폴더명이 지원자 번호와 같아야 자기소개서와 자동으로 연결됩니다."}
-                  </div>
-                </div>
-              </>
-            )}
-          </label>
-        </label>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <label className="block">
-            <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-              분석명 (선택)
-            </span>
-            <input
-              className="input"
-              placeholder="예) 2026 상반기 연구직 1차"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-            />
-          </label>
-          <label className="block">
-            <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-2">
-              직군 지정
-            </span>
-            <select
-              className="input appearance-none"
-              value={track}
-              onChange={(e) => setTrack(e.target.value)}
-            >
-              {TRACKS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <fieldset>
-          <span className="block text-[12px] tracking-[0.18em] text-[var(--ink-muted)] mb-3">
-            분석 수준 선택
-          </span>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[
-              { v: "full", t: "전체", d: "요약, 점수, 면접 질문 전체" },
-              { v: "score_only", t: "채점만", d: "직무적합도 점수만 (빠름)" },
-              { v: "questions_only", t: "면접 질문만", d: "추천 면접 질문 6~8개" },
-            ].map((opt) => (
-              <label
-                key={opt.v}
-                className={`cursor-pointer rounded-xl border px-4 py-3 transition has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--ink)] ${
-                  mode === opt.v
-                    ? "border-[var(--primary)] bg-[var(--primary)] text-white"
-                    : "border-[var(--line-strong)] hover:border-[var(--primary)]"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="mode"
-                  value={opt.v}
-                  checked={mode === opt.v}
-                  onChange={() => setMode(opt.v as typeof mode)}
-                  className="sr-only"
-                />
-                <div className="font-semibold text-[15px]">{opt.t}</div>
-                <div className={`text-[13px] mt-1 ${mode === opt.v ? "text-white" : "text-[var(--ink-muted)]"}`}>{opt.d}</div>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        {err && (
-          <div className="text-[15px] text-[var(--bad)] bg-[var(--bad)]/8 border border-[var(--bad)]/30 rounded-lg px-3.5 py-2.5">
-            {err}
-          </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (pdfZip) void upload(pdfZip);
+        }}
+        className="space-y-6 mt-6 panel"
+      >
+        {busy && <p role="status">논문 PDF ZIP 업로드 중</p>}
+        {createdPrelim && (
+          <p>
+            사전스크리닝 검토도 만들었습니다.{" "}
+            <Link className="underline" href={`/prelim/${encodeURIComponent(createdPrelim)}`}>
+              검토 결과 보기
+            </Link>
+          </p>
         )}
-        {zipSummary && (
-          <div className="text-[15px] text-[var(--ink-muted)] bg-[var(--bg-2)] border border-[var(--line)] rounded-lg px-3.5 py-2.5">
-            {zipSummary}
-          </div>
+        {err && <p role="alert" className="text-[var(--bad)] break-words">{err}</p>}
+        {createWarnings.length > 0 && (
+          <section aria-label="입력 안내">
+            <h2 className="font-semibold">입력 안내 {createWarnings.length}건</h2>
+            <ul className="list-disc pl-5 mt-2 space-y-1 break-words">
+              {createWarnings.map((message, index) => <li key={index}>{message}</li>)}
+            </ul>
+          </section>
         )}
-
-        <div className="flex justify-end pt-2">
-          <button type="submit" className="btn-primary" disabled={!file || busy}>
-            {busy ? busyMsg : "분석 시작"}
+        {zipSummary && <p role="status">{zipSummary}</p>}
+        {zipErrors.length > 0 && (
+          <section aria-label="처리하지 못한 논문">
+            <h2 className="font-semibold">논문 처리 안내 {zipErrors.length}건</h2>
+            <ul className="list-disc pl-5 mt-2 space-y-1 break-words">
+              {zipErrors.map((message, index) => <li key={index}>{message}</li>)}
+            </ul>
+          </section>
+        )}
+        {unmatchedApplicants.length > 0 && (
+          <section aria-label="연결하지 못한 지원자">
+            <h2 className="font-semibold">연결하지 못한 지원자 {unmatchedApplicants.length}명</h2>
+            <p className="mt-2 break-words">{unmatchedApplicants.join(", ")}</p>
+            <p className="mt-2">폴더명의 지원자 번호가 자기소개서의 지원자 번호와 같은지 확인해 주십시오.</p>
+          </section>
+        )}
+        <label className="block space-y-2">
+          <span className="block">논문 PDF ZIP 다시 선택 (PDF 파일 1개당 최대 50MB)</span>
+          <input
+            type="file"
+            className="block w-full min-w-0 max-w-full"
+            accept=".zip,application/zip,application/x-zip-compressed"
+            disabled={busy}
+            onChange={(e) => setPdfZip(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        <p className="text-[13px] text-[var(--ink-muted)]">
+          용량을 초과한 경우 파일을 나누어 업로드해 주십시오. 다시 업로드해도 자기소개서 분석은 새로 생성되지 않습니다.
+          이미 등록된 논문은 중복으로 제외됩니다. 분석을 시작하지 못한 논문은 분석 결과 화면에서 상태를 확인해 주십시오.
+        </p>
+        <div className="flex flex-wrap gap-3 justify-end">
+          <button type="submit" className="btn-primary" disabled={busy || !pdfZip}>
+            {busy ? "논문 PDF ZIP 업로드 중" : "논문 ZIP 재업로드"}
+          </button>
+          <button type="button" className="btn-primary" disabled={busy}
+            onClick={() =>
+              router.push(
+                `/jobs/${encodeURIComponent(createdJobId)}${createdPrelim ? `?prelim=${encodeURIComponent(createdPrelim)}` : ""}`,
+              )
+            }>
+            분석 결과 보기
           </button>
         </div>
       </form>

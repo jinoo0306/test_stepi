@@ -296,16 +296,30 @@ export default function ResultView({ ticket }: { ticket: string }) {
     setDownloading(false);
   }
 
+  // 신규 검토 생성에서 지원자 분석도 함께 만들었으면 그 분석 번호가 주소에 옴(PRELIM-003)
+  const job = sp.get("job");
   const head = (description?: ReactNode, aside?: ReactNode) => (
-    <PageHeader
-      back={{ href: "/prelim", label: "분석 현황" }}
-      eyebrow="사전스크리닝 검토"
-      icon={ShieldAlert}
-      title="사전스크리닝 검토 결과"
-      description={description}
-      wideDescription
-      aside={aside}
-    />
+    <>
+      <PageHeader
+        back={{ href: "/prelim", label: "분석 현황" }}
+        eyebrow="사전스크리닝 검토"
+        icon={ShieldAlert}
+        title="사전스크리닝 검토 결과"
+        description={description}
+        wideDescription
+        aside={aside}
+      />
+      {job && (
+        <div className="prelim mt-6">
+          <div className="refbox">
+            <span>지원자 분석도 만들었습니다.</span>
+            <Link className="btn link" href={`/jobs/${encodeURIComponent(job)}`}>
+              분석 결과 보기
+            </Link>
+          </div>
+        </div>
+      )}
+    </>
   );
 
   if (error) {

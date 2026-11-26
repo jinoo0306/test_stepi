@@ -1,7 +1,6 @@
-import UploadForm from "./upload-form";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
+// 업로드 입구는 한 화면(PRELIM-003 CHG-002)
 export default function PrelimNewPage() {
-  return <UploadForm />;
+  redirect("/jobs/new");
 }

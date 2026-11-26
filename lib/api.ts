@@ -513,6 +513,20 @@ export const asError = (e: unknown): Error => (e instanceof Error ? e : new Erro
 /** 서버가 404 를 돌려준 실패인지 */
 export const isNotFound = (e: unknown): boolean => e instanceof ApiError && e.status === 404;
 
+// 지원자 분석 만들기의 직군 지정·분석 수준 선택(새 분석 화면과 사전스크리닝 화면이 같이 씀)
+export const JOB_TRACKS = [
+  { value: "", label: "선택 (미선택 시 자동 추정)" },
+  { value: "연구직", label: "연구직" },
+  { value: "전문연구직", label: "전문연구직" },
+  { value: "행정직", label: "행정직" },
+];
+export const JOB_MODES = [
+  { v: "full", t: "전체", d: "요약, 점수, 면접 질문 전체" },
+  { v: "score_only", t: "채점만", d: "직무적합도 점수만 (빠름)" },
+  { v: "questions_only", t: "면접 질문만", d: "추천 면접 질문 6~8개" },
+] as const;
+export type JobMode = (typeof JOB_MODES)[number]["v"];
+
 export const api = {
   // 인재상 기준 문장(TALENT-001)
   getTalentCriteria: () => http<TalentCriteria>("/talent-criteria"),

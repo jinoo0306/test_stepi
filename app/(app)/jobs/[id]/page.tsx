@@ -14,10 +14,14 @@ export const dynamic = "force-dynamic";
 
 export default async function JobDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ prelim?: string }>;
 }) {
   const { id } = await params;
+  // 신규 분석 생성에서 사전스크리닝 검토도 함께 만들었으면 그 검토 번호가 주소에 옴(PRELIM-003)
+  const { prelim: prelimTicket } = await searchParams;
   const statusRes = await api.getStatus(id).catch(asError);
   const status = statusRes instanceof Error ? null : statusRes;
   // 진행 중(running/pending)이어도 그때까지 끝난 지원자 부분 결과를 같이 가져옴
@@ -113,6 +117,15 @@ export default async function JobDetailPage({
           </div>
         }
       />
+
+      {prelimTicket && (
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-[15px] text-[var(--ink-muted)] bg-[var(--bg-2)] border border-[var(--line)] rounded-lg px-3.5 py-2.5">
+          <span>사전스크리닝 검토도 만들었습니다.</span>
+          <Link className="underline text-[var(--ink)]" href={`/prelim/${encodeURIComponent(prelimTicket)}`}>
+            검토 결과 보기
+          </Link>
+        </div>
+      )}
 
       {!!status.warnings?.length && (
         <div role="note" className="mt-8 border-l-2 border-[var(--gold)] pl-4 py-2">

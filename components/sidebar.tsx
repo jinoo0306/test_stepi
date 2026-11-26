@@ -77,8 +77,15 @@ export default function Sidebar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
 
-  // 세 개의 동급 기능. 「사전스크리닝검토」와 「지원자 분석」은 하위 탭을 가짐
+  // 맨 위 업로드 입구 하나(PRELIM-003 CHG-002)와 세 개의 동급 기능. 「사전스크리닝검토」와 「지원자 분석」은 하위 탭을 가짐
   const features: Feature[] = [
+    {
+      key: "new",
+      label: "신규 분석 생성",
+      icon: FilePlus2,
+      href: "/jobs/new",
+      match: (p) => p === "/jobs/new",
+    },
     {
       key: "prelim",
       label: "사전스크리닝 검토",
@@ -112,19 +119,13 @@ export default function Sidebar() {
       key: "analysis",
       label: "지원자 분석",
       icon: LayoutDashboard,
-      match: (p) => p.startsWith("/jobs") || p.startsWith("/trash") || p.startsWith("/talent"),
+      match: (p) => (p.startsWith("/jobs") && p !== "/jobs/new") || p.startsWith("/trash") || p.startsWith("/talent"),
       children: [
         {
           href: "/jobs",
           label: "분석 현황",
           icon: LayoutDashboard,
           match: (p) => p.startsWith("/jobs") && p !== "/jobs/new",
-        },
-        {
-          href: "/jobs/new",
-          label: "신규 분석 생성",
-          icon: FilePlus2,
-          match: (p) => p === "/jobs/new",
         },
         {
           href: "/talent",
