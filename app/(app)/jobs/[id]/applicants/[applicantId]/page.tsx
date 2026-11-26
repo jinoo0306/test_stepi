@@ -348,7 +348,7 @@ export default async function ApplicantDetailPage({
                 <Card
                   title="AI 사용 의심도 근거"
                   badge={<ExperimentalBadge />}
-                  desc="자기소개서의 문자 패턴을 비교한 실험 점수입니다. AI 사용 비율이나 작성 확률이 아닙니다."
+                  desc="자기소개서의 문체 비율(문장 길이, 문장부호, 띄어쓰기 등)을 비교한 실험 점수입니다. AI 사용 비율이나 작성 확률이 아닙니다."
                 >
                   <AiDetectionButton jobId={id} applicantId={decodedAppId} running={applicant.ai_detection?.status === "running"} />
                   <AiUsageSection detection={applicant.ai_detection} />
