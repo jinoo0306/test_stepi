@@ -693,22 +693,6 @@ export const api = {
       `/analysis-jobs/${id}/applicants/${encodeURIComponent(applicantId)}`,
       { method: "DELETE" },
     ),
-  bulkUploadPapers: async (id: string, zipFile: File) => {
-    const fd = new FormData();
-    fd.append("file", zipFile);
-    const res = await apiFetch(`/analysis-jobs/${id}/papers/bulk-upload`, {
-      method: "POST",
-      body: fd,
-    });
-    return prelimJson<{
-      total_pdf_entries: number;
-      queued: number;
-      duplicate_skipped: number;
-      unmatched_applicants: string[];
-      errors: string[];
-      queued_file_ids: number[];
-    }>(res);
-  },
   reportPdfUrl: (id: string) => downloadUrl(`/analysis-jobs/${id}/report.pdf`),
   resultCsvUrl: (id: string) => downloadUrl(`/analysis-jobs/${id}/result.csv`),
 

@@ -9,13 +9,10 @@ import { api, failText, JOB_MODES, JOB_TRACKS, prelim, type JobMode, type Prelim
 import { browseZip, rememberZip, startAttachUpload, type ZipHandle } from "../attach-upload";
 import "../prelim.css";
 
-type Slot = "essay" | "attach" | "origin" | "paper";
+type Slot = "essay" | "attach" | "origin";
 
 const TOGGLE_STYLE = { display: "flex", alignItems: "center", gap: 10, fontSize: 17.5, fontWeight: 600 } as const;
 const BOX_STYLE = { width: 20, height: 20, accentColor: "var(--navy)" } as const;
-
-/** 논문 PDF ZIP 은 분석을 만든 뒤 논문 업로드 결과 화면이 올림 */
-export type PaperHandOff = { jobId: string; ticket?: string; zip: File; warnings: string[] };
 
 const EMPTY_TEXT = "파일을 끌어다 놓거나 클릭하여 선택해 주십시오.";
 
@@ -117,13 +114,12 @@ function DropBox({
   );
 }
 
-export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => void }) {
+export default function UploadForm() {
   const router = useRouter();
   const [files, setFiles] = useState<Record<Slot, File | null>>({
     essay: null,
     attach: null,
     origin: null,
-    paper: null,
   });
   const [evalDate, setEvalDate] = useState("");
   const pickerRef = useRef<HTMLInputElement>(null);
@@ -172,7 +168,7 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
       );
       return false;
     }
-    if (f && (slot === "attach" || slot === "paper") && (await isBrokenZip(f).catch(() => true))) {
+    if (f && slot === "attach" && (await isBrokenZip(f).catch(() => true))) {
       setFiles((prev) => ({ ...prev, [slot]: null }));
       window.alert("zip 파일을 열지 못했습니다. zip 으로 압축한 파일인지 확인해 주세요.");
       return false;
@@ -218,7 +214,7 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
     setRunning(true);
     setError(null);
     setJobError(null);
-    const runPrelim = async () => {
+    const runPrelim = async (jobId?: string) => {
       const form = new FormData();
       if (files.essay) form.append("apply_xlsx", files.essay);
       if (files.origin) form.append("raw_xlsm", files.origin);
@@ -226,6 +222,7 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
       if (files.attach) form.append("has_attach", "true");
       if (evalIso) form.append("eval_date", evalIso);
       if (saveName.trim()) form.append("label", saveName.trim());
+      if (jobId) form.append("job_id", jobId);
       const res = await prelim.run(form);
       // 엑셀 결과를 먼저 보도록 결과 화면으로 바로 넘어가고, zip 은 뒤에서 계속 올림
       if (files.attach) {
@@ -234,10 +231,8 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
       }
       return res.ticket;
     };
-    let warnings: string[] = [];
-    // 두 쪽을 함께 보내고 한쪽 실패가 다른 쪽을 막지 않음
-    const [p, j] = await Promise.allSettled([
-      withPrelim ? (made.ticket ?? runPrelim()) : undefined,
+    // 분석을 먼저 만들고 그 번호를 검토에 실어 첨부 실적의 논문을 넘김(CHG-003). 한쪽 실패가 다른 쪽을 막지 않음
+    const [j] = await Promise.allSettled([
       jobOn
         ? (made.jobId ??
           api
@@ -249,19 +244,16 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
               sheet_name: sheet.essay || undefined,
               info_sheet_name: (files.origin && sheet.origin) || undefined,
             })
-            .then((r) => {
-              warnings = r.warnings ?? [];
-              return r.job_id;
-            }))
+            .then((r) => r.job_id))
         : undefined,
     ]);
-    const ticket = p.status === "fulfilled" ? p.value : undefined;
     const jobId = j.status === "fulfilled" ? j.value : undefined;
+    const [p] = await Promise.allSettled([withPrelim ? (made.ticket ?? runPrelim(jobId)) : undefined]);
+    const ticket = p.status === "fulfilled" ? p.value : undefined;
     if (p.status === "rejected") setError(failText(p.reason, "사전스크리닝 실행에 실패하였습니다."));
     if (j.status === "rejected") setJobError(failText(j.reason, "업로드에 실패하였습니다."));
     if (p.status === "fulfilled" && j.status === "fulfilled") {
-      if (jobId && files.paper) onPaper({ jobId, ticket, zip: files.paper, warnings });
-      else if (ticket) router.push(`/prelim/${encodeURIComponent(ticket)}${jobId ? `?job=${encodeURIComponent(jobId)}` : ""}`);
+      if (ticket) router.push(`/prelim/${encodeURIComponent(ticket)}${jobId ? `?job=${encodeURIComponent(jobId)}` : ""}`);
       else if (jobId) router.push(`/jobs/${encodeURIComponent(jobId)}`);
       return;
     }
@@ -330,7 +322,7 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
                 <div>
                   <div className="name">첨부 실적</div>
                   <div className="hint">.zip 파일 (pdf·docx·이미지)</div>
-                  <div className="hint">사전스크리닝 검토에만 씁니다.</div>
+                  <div className="hint">지원자 분석도 만들면 논문첨부·학술지 게재 폴더의 PDF를 분석 논문으로 넘깁니다.</div>
                   {attachMaxGb !== null && (
                     <div className="hint">
                       첨부 실적은 최대 {attachMaxGb}GB까지 업로드할 수 있습니다.
@@ -356,24 +348,6 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
                       void pick("attach")(file);
                     })
                   }
-                />
-              </div>
-
-              <div className="file-row">
-                <div>
-                  <div className="name">논문 PDF</div>
-                  <div className="hint">.zip 파일 (PDF 파일 1개당 최대 50MB)</div>
-                  <div className="hint">
-                    지원자 분석에만 씁니다. 지원자 번호별로 폴더를 만들어 해당 지원자의 논문 PDF를 저장한 후, 전체 폴더를 ZIP
-                    파일로 압축하여 업로드해 주십시오. 폴더명이 지원자 번호와 같아야 자기소개서와 자동으로 연결됩니다.
-                  </div>
-                </div>
-                <DropBox
-                  accept=".zip,application/zip,application/x-zip-compressed"
-                  label="논문 PDF zip 파일 선택"
-                  file={jobOn ? files.paper : null}
-                  onPick={pick("paper")}
-                  disabled={!jobOn}
                 />
               </div>
 
@@ -578,7 +552,7 @@ export default function UploadForm({ onPaper }: { onPaper: (h: PaperHandOff) => 
               <div className="refbox">
                 <span>
                   {made.ticket ? "검토는 만들었습니다." : "지원자 분석은 만들었습니다."}
-                  {made.jobId && files.paper && " 논문 PDF ZIP 은 아직 올리지 않았습니다. 다시 시도하면 함께 올립니다."}
+                  {made.ticket && !made.jobId && files.attach && jobOn && " 첨부 실적의 논문 PDF는 다시 만드는 지원자 분석으로 넘기지 않습니다."}
                 </span>
                 <Link
                   className="btn link"
